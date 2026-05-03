@@ -1157,7 +1157,21 @@
                     if (isFetchingWeather.value) return;
                     isFetchingWeather.value = true; locationUpdateStatus.value = 'fetching'; 
                     navigator.geolocation.getCurrentPosition(async (p) => { 
-                        await fetchWeatherData(p.coords.latitude, p.coords.longitude); locationName.value = '目前位置'; locationUpdateStatus.value = 'success'; isFetchingWeather.value = false; 
+                        const lat = p.coords.latitude;
+                        const lon = p.coords.longitude;
+                        await fetchWeatherData(lat, lon); 
+                        
+                        // 透過逆地理編碼 API 將經緯度轉換為真實地名
+                        try {
+                            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=12&accept-language=zh-TW`);
+                            const geoData = await geoRes.json();
+                            const addr = geoData.address;
+                            locationName.value = addr?.city || addr?.town || addr?.county || addr?.state || geoData.name || '當地位置';
+                        } catch (e) {
+                            locationName.value = '當地位置';
+                        }
+
+                        locationUpdateStatus.value = 'success'; isFetchingWeather.value = false; 
                     }, async (err) => { 
                         await fetchWeatherData(25.0330, 121.5654); locationName.value = '台北市 (預設)'; locationUpdateStatus.value = 'error'; isFetchingWeather.value = false; 
                     }, { timeout: 8000 }); 
