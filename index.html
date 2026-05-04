@@ -1161,19 +1161,20 @@
                         const lon = p.coords.longitude;
                         await fetchWeatherData(lat, lon); 
                         
-                        // 透過逆地理編碼 API 將經緯度轉換為真實地名
+                        // 透過逆地理編碼 API 將經緯度轉換為真實地名 (提高 zoom 級別以獲取精確區域名)
                         try {
-                            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=12&accept-language=zh-TW`);
+                            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&accept-language=zh-TW`);
                             const geoData = await geoRes.json();
-                            const addr = geoData.address;
-                            locationName.value = addr?.city || addr?.town || addr?.county || addr?.state || geoData.name || '當地位置';
+                            const addr = geoData.address || {};
+                            // 優先讀取區/鄉/鎮的欄位 (city_district, suburb, town, village)
+                            locationName.value = addr.city_district || addr.suburb || addr.town || addr.village || addr.city || addr.county || addr.state || geoData.name || '當地位置';
                         } catch (e) {
                             locationName.value = '當地位置';
                         }
 
                         locationUpdateStatus.value = 'success'; isFetchingWeather.value = false; 
                     }, async (err) => { 
-                        await fetchWeatherData(25.0330, 121.5654); locationName.value = '台北市 (預設)'; locationUpdateStatus.value = 'error'; isFetchingWeather.value = false; 
+                        await fetchWeatherData(25.0330, 121.5654); locationName.value = '信義區 (預設)'; locationUpdateStatus.value = 'error'; isFetchingWeather.value = false; 
                     }, { timeout: 8000 }); 
                 };
                 const fetchWeatherData = async (lat, lon) => { 
