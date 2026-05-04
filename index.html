@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 加入 interactive-widget=resizes-content 讓現代行動版瀏覽器自動因應鍵盤調整畫面 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
     <title>伴旅 COTABI - 專屬行程管家</title>
     
     <link rel="icon" type="image/png" href="icon.png">
@@ -453,7 +454,7 @@
 
         <!-- 🌟 機票票券 Modal (全新日系 Boarding Pass 設計 + 底部抽屜) -->
         <transition name="modal">
-            <div v-if="flightModal.show" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[7000]" @click.self="flightModal.show = false">
+            <div v-if="flightModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[7000]" :style="viewportStyle" @click.self="flightModal.show = false">
                 <div class="modal-panel bg-muji-bg w-full max-w-md h-[85vh] rounded-t-xl p-7 shadow-2xl flex flex-col relative overflow-hidden font-sans border-t border-white/20">
                     <div class="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-6 shrink-0 opacity-40"></div>
                     <div class="flex justify-between items-center mb-6 px-1 shrink-0">
@@ -598,7 +599,7 @@
         
         <!-- 清單項目編輯 Modal -->
         <transition name="modal">
-            <div v-if="checklistItemModal.show" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8000]" @click.self="checklistItemModal.show = false">
+            <div v-if="checklistItemModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8000]" :style="viewportStyle" @click.self="checklistItemModal.show = false">
                 <div class="modal-panel bg-muji-bg w-full max-w-md rounded-t-xl p-7 pb-12 flex flex-col relative font-sans border-t border-white/20">
                     <div class="flex justify-between items-center mb-6 px-1">
                         <h2 class="text-base font-bold tracking-widest text-muji-ink font-mono">{{ checklistItemModal.mode === 'add' ? '新增項目' : '編輯項目' }}</h2>
@@ -621,7 +622,7 @@
 
         <!-- 清單重置 Modal -->
         <transition name="modal">
-            <div v-if="checklistResetModal.show" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[9000]" @click.self="checklistResetModal.show = false">
+            <div v-if="checklistResetModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[9000]" :style="viewportStyle" @click.self="checklistResetModal.show = false">
                 <div class="modal-panel bg-muji-bg w-full max-w-md rounded-t-xl p-7 pb-12 relative font-sans">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-base font-bold text-muji-ink tracking-widest flex items-center gap-2 font-mono"><i class="ph-bold ph-arrow-counter-clockwise"></i> 重置資料</h3>
@@ -637,7 +638,7 @@
 
         <!-- 行程設定 Modal -->
         <transition name="modal">
-            <div v-if="tripModal.show" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8000]" @click.self="tripModal.show = false">
+            <div v-if="tripModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8000]" :style="viewportStyle" @click.self="tripModal.show = false">
                 <div class="modal-panel bg-muji-bg w-full max-w-md rounded-t-xl p-7 pb-12 relative font-sans font-bold">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-base font-bold text-muji-ink tracking-widest font-mono">行程設定</h3>
@@ -660,7 +661,7 @@
 
         <!-- 文字輸入 Modal -->
         <transition name="modal">
-            <div v-if="textModal.show" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8000]" @click.self="cancelTextInput">
+            <div v-if="textModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8000]" :style="viewportStyle" @click.self="cancelTextInput">
                 <div class="modal-panel bg-muji-bg w-full max-w-md rounded-t-xl p-7 pb-12 relative font-sans font-bold">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-base font-bold text-muji-ink tracking-widest">{{ textModal.title }}</h3>
@@ -675,7 +676,7 @@
 
         <!-- Icon 選擇 Modal -->
         <transition name="modal">
-            <div v-if="iconModal.show" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[9000]" @click.self="iconModal.show = false">
+            <div v-if="iconModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[9000]" :style="viewportStyle" @click.self="iconModal.show = false">
                 <div class="modal-panel bg-muji-bg w-full max-w-md rounded-t-xl p-7 pb-12 relative">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-base font-bold text-muji-ink font-mono tracking-widest">選擇圖示</h3>
@@ -692,7 +693,7 @@
 
         <!-- 成員編輯 Modal -->
         <transition name="modal">
-            <div v-if="memberModal.show" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8000]" @click.self="memberModal.show = false">
+            <div v-if="memberModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8000]" :style="viewportStyle" @click.self="memberModal.show = false">
                 <div class="modal-panel bg-muji-bg w-full max-w-md rounded-t-xl p-7 pb-12 flex flex-col relative font-sans border-t border-white/20">
                     <div class="flex justify-between items-center mb-6 px-1">
                         <h2 class="text-base font-bold tracking-widest text-muji-ink font-mono">{{ memberModal.mode === 'add' ? '新增成員' : '編輯成員' }}</h2>
@@ -730,7 +731,7 @@
         </transition>
 
         <transition name="modal">
-            <div v-if="showSettings" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[7000]" @click.self="showSettings = false">
+            <div v-if="showSettings" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[7000]" :style="viewportStyle" @click.self="showSettings = false">
                 <div class="modal-panel bg-muji-bg w-full max-w-md rounded-t-xl p-7 pb-12 flex flex-col relative font-sans border-t border-white/20">
                     <div class="flex justify-between items-center mb-8 px-1">
                         <h2 class="text-lg font-bold tracking-widest text-muji-ink flex items-center gap-2"><i class="ph-bold ph-gear-six"></i> 系統設定</h2>
@@ -812,6 +813,7 @@
                 const checklistResetModal = ref({ show: false });
                 const memberModal = ref({ show: false, mode: 'add', member: null });
                 const checklistItemModal = ref({ show: false, mode: 'add', categoryId: null, item: { id: '', text: '', desc: '', checked: false } });
+                const viewportStyle = ref({ height: '100vh', top: '0px' });
                 
                 const fontSizeLevel = ref(1);
                 const weatherTrendType = ref('temp');
@@ -909,12 +911,27 @@
                     const hours = weatherInfo.value.hourly || [];
                     if(hours.length === 0) return { pathD: '', hours: [] };
                     const values = hours.map(h => weatherTrendType.value === 'temp' ? h.temp : h.precip);
-                    const minV = Math.min(...values); const maxV = Math.max(...values);
-                    const range = (maxV - minV) || 1;
+                    const minV = Math.min(...values); 
+                    const maxV = Math.max(...values);
+                    const range = maxV - minV;
                     
                     const mappedHours = hours.map((h, i) => {
                         const val = weatherTrendType.value === 'temp' ? h.temp : h.precip;
-                        const y = 60 - ((val - minV) / range) * 45; 
+                        let y;
+                        
+                        if (weatherTrendType.value === 'precip') {
+                            // 降雨機率使用「絕對比例」(0%在底, 100%在頂)
+                            y = 60 - (val / 100) * 45; 
+                        } else {
+                            // 氣溫使用「動態放大比例」凸顯溫差
+                            if (range === 0) {
+                                // 恆溫狀態：將曲線畫在正中央 (15 ~ 60 的中間值是 37.5)
+                                y = 37.5;
+                            } else {
+                                y = 60 - ((val - minV) / range) * 45; 
+                            }
+                        }
+                        
                         return { ...h, x: i * 48 + 24, y };
                     });
                     
@@ -1161,12 +1178,10 @@
                         const lon = p.coords.longitude;
                         await fetchWeatherData(lat, lon); 
                         
-                        // 透過逆地理編碼 API 將經緯度轉換為真實地名 (提高 zoom 級別以獲取精確區域名)
                         try {
                             const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&accept-language=zh-TW`);
                             const geoData = await geoRes.json();
                             const addr = geoData.address || {};
-                            // 優先讀取區/鄉/鎮的欄位 (city_district, suburb, town, village)
                             locationName.value = addr.city_district || addr.suburb || addr.town || addr.village || addr.city || addr.county || addr.state || geoData.name || '當地位置';
                         } catch (e) {
                             locationName.value = '當地位置';
@@ -1254,6 +1269,25 @@
 
                 onMounted(() => {
                     if (window.AudioContext || window.webkitAudioContext) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    if (window.visualViewport) {
+                        const updateVv = () => {
+                            viewportStyle.value = {
+                                height: `${window.visualViewport.height}px`,
+                                top: `${window.visualViewport.offsetTop}px`
+                            };
+                        };
+                        window.visualViewport.addEventListener('resize', updateVv);
+                        window.visualViewport.addEventListener('scroll', updateVv);
+                        updateVv();
+                    } else {
+                        const updateVv = () => {
+                            viewportStyle.value = { height: `${window.innerHeight}px`, top: '0px' };
+                        };
+                        window.addEventListener('resize', updateVv);
+                        updateVv();
+                    }
+
                     setTimeout(() => { splashStep.value = 1; sfx.splash(); }, 200);
                     setTimeout(() => splashStep.value = 2, 1000);
                     setTimeout(() => splashStep.value = 3, 2400);
@@ -1267,7 +1301,7 @@
                 }, { deep: true });
 
                 return {
-                    showSplash, splashStep, mainScrollArea, textInputRef, activeTab, isEditing, activeTripId, activeDay, showSettings, textModal, tripModal, iconModal, flightModal, checklistResetModal, checklistItemModal, memberModal, fontSizeLevel, weatherTrendType, collapsedGroups, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers,
+                    showSplash, splashStep, mainScrollArea, textInputRef, activeTab, isEditing, activeTripId, activeDay, showSettings, textModal, tripModal, iconModal, flightModal, checklistResetModal, checklistItemModal, memberModal, viewportStyle, fontSizeLevel, weatherTrendType, collapsedGroups, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers,
                     activeTrip, currentDayItinerary, displayExpression, hasOperatorInExpr, weatherTrend, categorizedTrips, calendarYear, calendarMonth, calendarDays, calculatedResultFormatted, evaluatedBaseFormatted, currentDateShort, currentDayOfWeek, greetingText, currencyList, formatDayTab, isFlightPassed,
                     playSound, getCurrencySym, getTripDateRange, toggleGroup, switchTab, openTrip, switchDay, toggleEdit, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, removeTrip, addSpot, removeSpot, addArea, removeArea, toggleCheck, addCategory, removeCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, removeCustomItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, updateRootFontSize, availableIcons, tabs, openMaps, getCategoryProgress
                 };
