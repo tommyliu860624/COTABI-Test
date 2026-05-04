@@ -104,7 +104,6 @@
                             <circle cx="16.25" cy="8" r="2.75" fill="#E83929"/>
                         </g>
                     </svg>
-                    <!-- 修正開場動畫對齊，讓 COTABI 稍微向左微調 -->
                     <div :class="splashStep >= 2 ? 'w-[72px] opacity-100 ml-3.5' : 'w-0 opacity-0 ml-0'" class="overflow-hidden transition-all duration-[1000ms] ease-out-expo shrink-0 flex flex-col justify-center h-[42px]">
                         <div :class="splashStep >= 3 ? 'opacity-0' : 'opacity-100'" class="w-[72px] transition-opacity duration-300 flex flex-col justify-center">
                             <h1 class="text-[28px] font-bold tracking-[0.2em] leading-none whitespace-nowrap pl-[0.2em]">伴旅</h1>
@@ -178,7 +177,7 @@
                         </div>
 
                         <!-- 天氣趨勢圖 -->
-                        <div v-if="weatherTrend && weatherTrend.hours && weatherTrend.hours.length > 0" class="mt-2 pt-3 border-t border-stone-700/50 relative z-10">
+                        <div v-if="weatherTrend.hours.length > 0" class="mt-2 pt-3 border-t border-stone-700/50 relative z-10">
                             <div class="flex justify-between items-center mb-2">
                                 <p class="text-[9px] tracking-widest text-stone-400 font-bold font-mono">預報趨勢</p>
                                 <div class="flex bg-stone-900/50 p-0.5 rounded-lg scale-75 origin-right border border-stone-700/30">
@@ -433,17 +432,23 @@
 
                 <!-- Tab: 工具 -->
                 <div v-else-if="activeTab === 'tools'" key="tools" class="px-5 pt-6 space-y-8 pb-20">
-                    <div class="mb-2"><h2 class="text-lg font-bold text-muji-ink tracking-wide">工具箱</h2></div>
+                    <div class="mb-2"><h2 class="text-lg font-bold text-muji-ink tracking-wide">旅行工具箱</h2></div>
                     
-                    <!-- 工具列表 -->
-                    <div class="grid grid-cols-1 gap-4 animate-[fadeIn_0.3s]">
+                    <div class="grid grid-cols-2 gap-4">
                         <!-- 雙向語音翻譯 -->
-                        <div @click="openVoiceTranslator" class="bg-white p-6 rounded-2xl shadow-soft border border-stone-200 hover:border-blue-500 active:scale-[0.98] transition-all cursor-pointer group flex flex-col items-center text-center">
-                            <div class="w-16 h-16 rounded-full bg-stone-50 border border-stone-100 text-blue-500 flex items-center justify-center mb-4 group-hover:bg-blue-500 group-hover:text-white transition-colors shadow-sm">
-                                <i class="ph-bold ph-microphone-stage text-3xl"></i>
+                        <button @click="openTranslator" class="bg-white rounded-xl p-5 shadow-soft border border-stone-200 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all group">
+                            <div class="w-12 h-12 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-muji-tech group-hover:bg-muji-accent group-hover:text-white transition-colors shadow-sm">
+                                <i class="ph-bold ph-translate text-2xl"></i>
                             </div>
-                            <h3 class="font-bold text-muji-ink text-base mb-2 tracking-wide">雙向語音翻譯機</h3>
-                            <p class="text-xs text-stone-400 leading-relaxed">雙方獨立選取語言<br>雙螢幕面對面無障礙溝通</p>
+                            <span class="text-[13px] font-bold text-muji-ink tracking-widest">雙向語音翻譯</span>
+                        </button>
+                        
+                        <!-- 其他未來工具站位 -->
+                        <div class="bg-stone-50/50 rounded-xl p-5 border border-stone-200 border-dashed flex flex-col items-center justify-center gap-3 opacity-50">
+                            <div class="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-300">
+                                <i class="ph-bold ph-wrench text-2xl"></i>
+                            </div>
+                            <span class="text-[13px] font-bold text-stone-400 tracking-widest">更多工具開發中</span>
                         </div>
                     </div>
                 </div>
@@ -505,74 +510,6 @@
 
         <!-- 🌟 以下全是統一由底部滑出的互動視窗 (Bottom Sheet Modals) 🌟 -->
         
-        <!-- 雙向語音翻譯 Modal (全螢幕，上下對開) -->
-        <transition name="fade">
-            <div v-if="translatorModal.show" class="fixed inset-0 bg-stone-900 z-[9999] flex flex-col pointer-events-auto font-sans" :style="viewportStyle">
-                <!-- 對方視角 (上半部，旋轉 180 度) -->
-                <div class="flex-1 flex flex-col relative bg-stone-800 border-b-2 border-stone-950 overflow-hidden transform rotate-180">
-                    <!-- 頂部列 (旋轉後會在物理的下方) -->
-                    <div class="absolute bottom-0 w-full p-6 flex justify-center z-20">
-                        <div class="relative inline-block">
-                            <select v-model="translatorModal.targetLang" class="bg-stone-700 text-white font-bold text-sm px-6 py-2.5 rounded-full outline-none appearance-none border border-stone-600 shadow-sm cursor-pointer pr-10">
-                                <option v-for="l in languageOptions" :key="'target-'+l.code" :value="l.code">{{ l.name }}</option>
-                            </select>
-                            <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="flex-1 flex flex-col items-center justify-center p-8 w-full">
-                        <p class="text-3xl font-bold text-white leading-snug text-center break-words w-full transition-opacity duration-300" :class="translatorModal.activeMic === 'target' ? 'opacity-50' : 'opacity-100'">
-                            {{ translatorModal.targetText || (translatorModal.status === 'listening' && translatorModal.activeMic === 'target' ? '聽取中...' : '...') }}
-                        </p>
-                    </div>
-                    
-                    <div class="absolute top-0 w-full p-8 flex justify-center z-20">
-                        <button @click="toggleMic('target')" class="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg" :class="translatorModal.activeMic === 'target' ? 'bg-blue-500 text-white animate-pulse shadow-[0_0_25px_rgba(59,130,246,0.6)] scale-110' : 'bg-stone-700 text-stone-300 hover:bg-stone-600 active:scale-95'">
-                            <i class="ph-fill ph-microphone text-3xl"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 關閉按鈕 (置中) -->
-                <button @click="closeTranslator" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-stone-800 text-stone-300 rounded-full flex items-center justify-center border-4 border-stone-900 shadow-xl z-50 hover:bg-stone-700 hover:text-white active:scale-90 transition-all">
-                    <i class="ph-bold ph-x text-2xl"></i>
-                </button>
-
-                <!-- 自己視角 (下半部) -->
-                <div class="flex-1 flex flex-col relative bg-stone-900 overflow-hidden">
-                     <!-- 頂部列 -->
-                    <div class="absolute top-0 w-full p-8 flex justify-center z-20">
-                        <button @click="toggleMic('user')" class="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg" :class="translatorModal.activeMic === 'user' ? 'bg-muji-accent text-white animate-pulse shadow-[0_0_25px_rgba(232,57,41,0.6)] scale-110' : 'bg-stone-800 border border-stone-700 text-stone-300 hover:bg-stone-700 active:scale-95'">
-                            <i class="ph-fill ph-microphone text-3xl"></i>
-                        </button>
-                    </div>
-
-                    <div class="flex-1 flex flex-col items-center justify-center p-8 w-full">
-                        <p class="text-3xl font-bold text-white leading-snug text-center break-words w-full transition-opacity duration-300" :class="translatorModal.activeMic === 'user' ? 'opacity-50' : 'opacity-100'">
-                            {{ translatorModal.userText || (translatorModal.status === 'listening' && translatorModal.activeMic === 'user' ? '請說話...' : '...') }}
-                        </p>
-                    </div>
-
-                    <div class="absolute bottom-0 w-full p-6 flex justify-center z-20">
-                        <div class="relative inline-block">
-                            <select v-model="translatorModal.userLang" class="bg-stone-800 text-stone-300 font-bold text-sm px-6 py-2.5 rounded-full outline-none appearance-none border border-stone-700 shadow-sm cursor-pointer pr-10">
-                                <option v-for="l in languageOptions" :key="'user-'+l.code" :value="l.code">{{ l.name }}</option>
-                            </select>
-                            <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 狀態提示覆蓋層 -->
-                <transition name="fade">
-                    <div v-if="translatorModal.status === 'translating'" class="absolute inset-0 bg-stone-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-[10000]">
-                        <i class="ph-bold ph-spinner animate-spin text-5xl text-white mb-5"></i>
-                        <span class="text-sm font-bold text-stone-300 tracking-widest font-mono">AI 翻譯中 TRANSLATING...</span>
-                    </div>
-                </transition>
-            </div>
-        </transition>
-
         <!-- 行程設定 Modal -->
         <transition name="modal">
             <div v-if="tripModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8000]" :style="viewportStyle" @click.self="tripModal.show = false">
@@ -946,6 +883,75 @@
             </div>
         </transition>
 
+        <!-- 雙向語音翻譯 Modal (全螢幕) -->
+        <transition name="modal">
+            <div v-if="translatorModal.show" class="fixed left-0 w-full bg-stone-900 z-[9999] flex flex-col font-sans" :style="viewportStyle">
+                <!-- 中央關閉按鈕 -->
+                <button @click="closeTranslator" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white z-50 shadow-lg active:scale-90 transition-all border border-white/30"><i class="ph-bold ph-x text-lg"></i></button>
+
+                <!-- 上半部 (面向對方，旋轉180度) -->
+                <div class="flex-1 bg-stone-800 text-white flex flex-col relative overflow-hidden transition-colors duration-300" :class="transTop.isListening ? 'bg-stone-700' : ''">
+                    <div class="absolute inset-0 flex flex-col p-6 pb-10 transform rotate-180">
+                        <!-- 語言選擇 -->
+                        <div class="flex justify-center mb-4">
+                            <select v-model="transTop.lang" class="bg-stone-900/60 text-white border border-stone-600 rounded-full px-5 py-2 text-sm font-bold tracking-widest outline-none text-center appearance-none cursor-pointer shadow-inner">
+                                <option v-for="l in transLanguages" :key="l.code" :value="l.code">{{ l.name }}</option>
+                            </select>
+                        </div>
+                        <!-- 文字顯示區 -->
+                        <div class="flex-1 flex flex-col items-center justify-center text-center space-y-4 overflow-y-auto hide-scrollbar w-full px-4">
+                            <!-- 顯示翻譯後的對方語言結果給對方看 -->
+                            <p v-if="transTop.translated" class="text-3xl font-bold text-muji-accent drop-shadow-md leading-tight">{{ transTop.translated }}</p>
+                            <!-- 顯示對方正在說的話 (辨識結果) -->
+                            <p v-if="transTop.recognized" class="text-lg text-stone-300 leading-snug">{{ transTop.recognized }}</p>
+                            
+                            <p v-if="!transTop.translated && !transTop.recognized" class="text-stone-500 text-xs tracking-widest font-mono">等待發言...</p>
+                            <p v-if="isTranslating" class="text-[10px] text-stone-400 animate-pulse flex items-center gap-1 font-mono tracking-widest"><i class="ph-bold ph-spinner animate-spin"></i> 翻譯中...</p>
+                        </div>
+                        <!-- 麥克風按鈕 -->
+                        <div class="flex justify-center mt-6">
+                            <button @click="toggleListen('top')" class="w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg border-4" :class="transTop.isListening ? 'bg-red-500 text-white border-red-300 animate-pulse scale-105' : 'bg-stone-600 text-stone-200 border-stone-700 active:scale-95'">
+                                <i class="ph-fill ph-microphone text-2xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分隔線 -->
+                <div class="h-1 bg-stone-900 shadow-[0_0_20px_rgba(0,0,0,0.8)] z-10 relative flex items-center justify-center">
+                    <div class="w-1/3 h-0.5 bg-stone-600 rounded-full opacity-50"></div>
+                </div>
+
+                <!-- 下半部 (面向自己) -->
+                <div class="flex-1 bg-muji-bg text-muji-ink flex flex-col relative overflow-hidden transition-colors duration-300" :class="transBottom.isListening ? 'bg-stone-100' : ''">
+                    <div class="absolute inset-0 flex flex-col p-6 pt-10">
+                        <!-- 語言選擇 -->
+                        <div class="flex justify-center mb-4">
+                            <select v-model="transBottom.lang" class="bg-white text-muji-ink border border-stone-200 rounded-full px-5 py-2 text-sm font-bold tracking-widest outline-none text-center appearance-none cursor-pointer shadow-sm">
+                                <option v-for="l in transLanguages" :key="l.code" :value="l.code">{{ l.name }}</option>
+                            </select>
+                        </div>
+                        <!-- 文字顯示區 -->
+                        <div class="flex-1 flex flex-col items-center justify-center text-center space-y-4 overflow-y-auto hide-scrollbar w-full px-4">
+                            <!-- 顯示翻譯後的自己語言結果給自己看 -->
+                            <p v-if="transBottom.translated" class="text-3xl font-bold text-muji-accent drop-shadow-sm leading-tight">{{ transBottom.translated }}</p>
+                            <!-- 顯示自己正在說的話 (辨識結果) -->
+                            <p v-if="transBottom.recognized" class="text-lg text-stone-500 leading-snug">{{ transBottom.recognized }}</p>
+                            
+                            <p v-if="!transBottom.translated && !transBottom.recognized" class="text-stone-400 text-xs tracking-widest font-mono">等待發言...</p>
+                            <p v-if="isTranslating" class="text-[10px] text-muji-tech animate-pulse flex items-center gap-1 font-mono tracking-widest"><i class="ph-bold ph-spinner animate-spin"></i> 翻譯中...</p>
+                        </div>
+                        <!-- 麥克風按鈕 -->
+                        <div class="flex justify-center mt-6">
+                            <button @click="toggleListen('bottom')" class="w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg border-4" :class="transBottom.isListening ? 'bg-red-500 text-white border-red-200 animate-pulse scale-105' : 'bg-white text-muji-ink border-stone-100 active:scale-95'">
+                                <i class="ph-fill ph-microphone text-2xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
         <!-- Bottom Navigation -->
         <nav id="nav-bar" class="glass-panel fixed bottom-0 w-full max-w-[480px] z-50 pt-1" style="padding-bottom: max(16px, env(safe-area-inset-bottom));">
             <div class="flex justify-around items-center h-[65px] px-2 outline-none">
@@ -1014,29 +1020,26 @@
                 const checklistItemModal = ref({ show: false, mode: 'add', categoryId: null, item: { id: '', text: '', desc: '', checked: false } });
                 const spotModal = ref({ show: false, mode: 'add', dayId: null, spot: { id: '', time: '', name: '', desc: '', mapUrl: '' } });
                 
+                // 全域刪除確認 Modal 狀態
                 const confirmModal = ref({ show: false, title: '', message: '', onConfirm: null });
                 
-                // Voice Translator State
-                const translatorModal = ref({
-                    show: false,
-                    userLang: 'zh-TW',
-                    targetLang: 'ja',
-                    userText: '',
-                    targetText: '',
-                    status: 'idle', // idle, listening, translating, error
-                    activeMic: null
-                });
-
-                const languageOptions = [
-                    { code: 'zh-TW', speechCode: 'cmn-Hant-TW', name: '中文 (台灣)' },
-                    { code: 'zh-CN', speechCode: 'cmn-Hans-CN', name: '中文 (简体)' },
-                    { code: 'ja', speechCode: 'ja-JP', name: '日本語' },
-                    { code: 'en', speechCode: 'en-US', name: 'English' },
-                    { code: 'ko', speechCode: 'ko-KR', name: '한국어' },
-                    { code: 'th', speechCode: 'th-TH', name: 'ภาษาไทย' },
-                    { code: 'vi', speechCode: 'vi-VN', name: 'Tiếng Việt' }
+                // 語音翻譯狀態
+                const isTranslating = ref(false);
+                const translatorModal = ref({ show: false });
+                const transLanguages = [
+                    { code: 'zh-TW', name: '繁體中文' },
+                    { code: 'zh-CN', name: '简体中文' },
+                    { code: 'ja-JP', name: '日本語' },
+                    { code: 'en-US', name: 'English' },
+                    { code: 'ko-KR', name: '한국어' },
+                    { code: 'th-TH', name: 'ไทย' },
+                    { code: 'vi-VN', name: 'Tiếng Việt' },
+                    { code: 'es-ES', name: 'Español' },
+                    { code: 'fr-FR', name: 'Français' }
                 ];
-                let speechRec = null;
+                const transTop = ref({ lang: 'ja-JP', recognized: '', translated: '', isListening: false });
+                const transBottom = ref({ lang: 'zh-TW', recognized: '', translated: '', isListening: false });
+                let speechRecognitionInstance = null;
 
                 const viewportStyle = ref({ height: '100vh', top: '0px' });
                 
@@ -1238,6 +1241,145 @@
                 const execConfirm = () => {
                     if(confirmModal.value.onConfirm) confirmModal.value.onConfirm();
                     confirmModal.value.show = false;
+                };
+
+                // 語音翻譯功能邏局
+                const openTranslator = () => {
+                    translatorModal.value.show = true;
+                    transTop.value.recognized = ''; transTop.value.translated = ''; transTop.value.isListening = false;
+                    transBottom.value.recognized = ''; transBottom.value.translated = ''; transBottom.value.isListening = false;
+                    playSound('pop');
+                };
+
+                const closeTranslator = () => {
+                    if (speechRecognitionInstance) {
+                        speechRecognitionInstance.stop();
+                        speechRecognitionInstance = null;
+                    }
+                    transTop.value.isListening = false;
+                    transBottom.value.isListening = false;
+                    translatorModal.value.show = false;
+                    playSound('pop');
+                };
+
+                const fetchWithRetry = async (url, options, retries = 5) => {
+                    let delay = 1000;
+                    for (let i = 0; i < retries; i++) {
+                        try {
+                            const res = await fetch(url, options);
+                            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                            return await res.json();
+                        } catch (e) {
+                            if (i === retries - 1) throw e;
+                            await new Promise(r => setTimeout(r, delay));
+                            delay *= 2;
+                        }
+                    }
+                };
+
+                const speakText = (text, lang) => {
+                    if ('speechSynthesis' in window) {
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.lang = lang;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                };
+
+                const doTranslate = async (text, fromLang, toLang, fromSide) => {
+                    if (!text) return;
+                    isTranslating.value = true;
+                    try {
+                        const apiKey = "";
+                        const prompt = `Translate the following text from ${fromLang} to ${toLang}. Only return the translated text without any quotes or explanations. Text: "${text}"`;
+                        const payload = { contents: [{ parts: [{ text: prompt }] }] };
+                        
+                        const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '翻譯失敗';
+
+                        if (fromSide === 'top') {
+                            transBottom.value.translated = translatedText;
+                        } else {
+                            transTop.value.translated = translatedText;
+                        }
+                        playSound('success');
+                        speakText(translatedText, toLang); // 語音合成念出翻譯
+
+                    } catch (error) {
+                        console.error("Translation error", error);
+                        const errTxt = '(翻譯發生錯誤，請重試)';
+                        if (fromSide === 'top') transBottom.value.translated = errTxt;
+                        else transTop.value.translated = errTxt;
+                        playSound('error');
+                    } finally {
+                        isTranslating.value = false;
+                    }
+                };
+
+                const toggleListen = (side) => {
+                    const sourceState = side === 'top' ? transTop.value : transBottom.value;
+                    const targetState = side === 'top' ? transBottom.value : transTop.value;
+
+                    // 若正在收聽，則停止
+                    if (sourceState.isListening) {
+                        if (speechRecognitionInstance) speechRecognitionInstance.stop();
+                        return;
+                    }
+
+                    // 確保沒有其他正在執行的語音辨識
+                    if (speechRecognitionInstance) {
+                        speechRecognitionInstance.stop();
+                        transTop.value.isListening = false;
+                        transBottom.value.isListening = false;
+                    }
+
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    if (!SpeechRecognition) {
+                        alert('您的瀏覽器不支援語音識別功能，請嘗試使用最新版 Chrome 或 Safari。');
+                        return;
+                    }
+
+                    playSound('click');
+                    speechRecognitionInstance = new SpeechRecognition();
+                    speechRecognitionInstance.lang = sourceState.lang;
+                    speechRecognitionInstance.interimResults = true;
+                    speechRecognitionInstance.continuous = false;
+
+                    speechRecognitionInstance.onresult = (event) => {
+                        let finalTranscript = '';
+                        let interimTranscript = '';
+                        for (let i = event.resultIndex; i < event.results.length; ++i) {
+                            if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+                            else interimTranscript += event.results[i][0].transcript;
+                        }
+                        sourceState.recognized = finalTranscript || interimTranscript;
+                    };
+
+                    speechRecognitionInstance.onerror = (event) => {
+                        console.warn("Speech recognition warning:", event.error); // 避免觸發控制台紅色錯誤
+                        sourceState.isListening = false;
+                        if (event.error === 'network') {
+                            sourceState.recognized = '⚠️ 語音連線失敗，請檢查網路或瀏覽器限制';
+                        } else if (event.error === 'not-allowed') {
+                            sourceState.recognized = '⚠️ 無法存取麥克風，請確認已授予權限';
+                        } else if (event.error !== 'aborted') {
+                            sourceState.recognized = `⚠️ 語音發生錯誤: ${event.error}`;
+                        }
+                        if (event.error !== 'aborted') playSound('error');
+                    };
+
+                    speechRecognitionInstance.onend = () => {
+                        sourceState.isListening = false;
+                        if (sourceState.recognized.trim() && !sourceState.recognized.startsWith('⚠️')) {
+                            doTranslate(sourceState.recognized, sourceState.lang, targetState.lang, side);
+                        }
+                    };
+
+                    speechRecognitionInstance.start();
                 };
 
                 const toggleGroup = (key) => { collapsedGroups.value[key] = !collapsedGroups.value[key]; playSound('pop'); };
@@ -1487,57 +1629,29 @@
 
                 const updateLocation = (isAuto = false) => { 
                     if (isFetchingWeather.value) return;
-                    isFetchingWeather.value = true; 
-                    locationUpdateStatus.value = 'fetching'; 
-                    
-                    const fallback = async () => {
-                        try {
-                            await fetchWeatherData(25.0330, 121.5654); 
-                            locationName.value = '台北市 (預設)'; 
-                            locationUpdateStatus.value = 'error'; 
-                        } catch(e) {
-                            locationUpdateStatus.value = 'error';
-                        } finally {
-                            isFetchingWeather.value = false; 
-                        }
-                    };
-
-                    if (!navigator.geolocation) {
-                        fallback();
-                        return;
-                    }
-
+                    isFetchingWeather.value = true; locationUpdateStatus.value = 'fetching'; 
                     navigator.geolocation.getCurrentPosition(async (p) => { 
+                        const lat = p.coords.latitude;
+                        const lon = p.coords.longitude;
+                        await fetchWeatherData(lat, lon); 
+                        
                         try {
-                            const lat = p.coords.latitude;
-                            const lon = p.coords.longitude;
-                            await fetchWeatherData(lat, lon); 
-                            
-                            try {
-                                const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&accept-language=zh-TW`);
-                                const geoData = await geoRes.json();
-                                const addr = geoData.address || {};
-                                locationName.value = addr.city_district || addr.suburb || addr.town || addr.village || addr.city || addr.county || addr.state || geoData.name || '當地位置';
-                            } catch (e) {
-                                locationName.value = '當地位置';
-                            }
-
-                            locationUpdateStatus.value = 'success'; 
+                            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&accept-language=zh-TW`);
+                            const geoData = await geoRes.json();
+                            const addr = geoData.address || {};
+                            locationName.value = addr.city_district || addr.suburb || addr.town || addr.village || addr.city || addr.county || addr.state || geoData.name || '當地位置';
                         } catch (e) {
                             locationName.value = '當地位置';
-                            locationUpdateStatus.value = 'error';
-                        } finally {
-                            isFetchingWeather.value = false; 
                         }
-                    }, (err) => { 
-                        fallback();
+
+                        locationUpdateStatus.value = 'success'; isFetchingWeather.value = false; 
+                    }, async (err) => { 
+                        await fetchWeatherData(25.0330, 121.5654); locationName.value = '信義區 (預設)'; locationUpdateStatus.value = 'error'; isFetchingWeather.value = false; 
                     }, { timeout: 8000 }); 
                 };
-
                 const fetchWeatherData = async (lat, lon) => { 
                     try { 
                         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&hourly=temperature_2m,precipitation_probability&daily=precipitation_probability_max&timezone=auto`); 
-                        if (!res.ok) throw new Error('API request failed');
                         const data = await res.json(); 
                         if (data?.current) { 
                             weatherInfo.value.temp = Math.round(data.current.temperature_2m); 
@@ -1547,59 +1661,17 @@
                             weatherInfo.value.desc = { sunny: '晴朗', cloudy: '多雲', rain: '有雨', snow: '下雪', fog: '起霧' }[weatherInfo.value.type];
                             weatherInfo.value.icon = { sunny: 'ph-sun', cloudy: 'ph-cloud', rain: 'ph-cloud-rain', snow: 'ph-snowflake', fog: 'ph-cloud-fog' }[weatherInfo.value.type];
                             weatherInfo.value.bgIcon = weatherInfo.value.icon;
-                            
                             const nextH = []; 
-                            if (data.hourly && data.hourly.temperature_2m) {
-                                const now = new Date();
-                                const yyyy = now.getFullYear();
-                                const mm = String(now.getMonth() + 1).padStart(2, '0');
-                                const dd = String(now.getDate()).padStart(2, '0');
-                                const hh = String(now.getHours()).padStart(2, '0');
-                                const targetTimeStr = `${yyyy}-${mm}-${dd}T${hh}:00`;
-
-                                let startIndex = 0;
-                                if (data.hourly.time && data.hourly.time.length > 0) {
-                                    const foundIdx = data.hourly.time.indexOf(targetTimeStr);
-                                    if (foundIdx !== -1) {
-                                        startIndex = foundIdx;
-                                    } else {
-                                        const nowTs = now.getTime();
-                                        let minDiff = Infinity;
-                                        data.hourly.time.forEach((tStr, i) => {
-                                            const parts = tStr.split(/[-T:]/);
-                                            if(parts.length >= 4) {
-                                                const ts = new Date(parts[0], parts[1]-1, parts[2], parts[3]).getTime();
-                                                const diff = Math.abs(ts - nowTs);
-                                                if(diff < minDiff) {
-                                                    minDiff = diff;
-                                                    startIndex = i;
-                                                }
-                                            }
-                                        });
-                                    }
-                                }
-                                
-                                for(let i=0; i<8; i++) { 
-                                    const idx = startIndex + i;
-                                    if (idx < data.hourly.temperature_2m.length) {
-                                        const tStr = data.hourly.time[idx] || '';
-                                        const hourMatch = tStr.match(/T(\d{2}):/);
-                                        const hourLabel = hourMatch ? parseInt(hourMatch[1], 10) + ':00' : '0:00';
-
-                                        nextH.push({ 
-                                            timeStr: hourLabel, 
-                                            temp: Math.round(data.hourly.temperature_2m[idx]), 
-                                            precip: data.hourly.precipitation_probability?.[idx] || 0 
-                                        }); 
-                                    }
-                                } 
-                                weatherInfo.value.hourly = nextH; 
-                            }
+                            for(let i=0; i<8; i++) { 
+                                nextH.push({ 
+                                    timeStr: (new Date().getHours() + i) % 24 + ':00', 
+                                    temp: Math.round(data.hourly.temperature_2m[i]), 
+                                    precip: data.hourly.precipitation_probability[i] || 0 
+                                }); 
+                            } 
+                            weatherInfo.value.hourly = nextH; 
                         } 
-                    } catch(e) {
-                        console.error('Weather Fetch Error', e);
-                        throw e; // 將錯誤拋出讓外層捕捉以觸發預設值
-                    } 
+                    } catch(e) {} 
                 };
 
                 const fetchExchangeRate = async () => { 
@@ -1678,129 +1750,6 @@
                 const scrollToTop = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); if (mainScrollArea.value) mainScrollArea.value.scrollTop = 0; };
                 const openSettings = () => { showSettings.value = true; playSound('pop'); };
 
-                // Dual-Screen Voice Translator Methods
-                const openVoiceTranslator = () => {
-                    translatorModal.value.show = true;
-                    translatorModal.value.userLang = 'zh-TW';
-                    translatorModal.value.targetLang = 'ja';
-                    translatorModal.value.userText = '';
-                    translatorModal.value.targetText = '';
-                    translatorModal.value.status = 'idle';
-                    translatorModal.value.activeMic = null;
-                    playSound('pop');
-                };
-
-                const closeTranslator = () => {
-                    if (speechRec && translatorModal.value.status === 'listening') {
-                        speechRec.stop();
-                    }
-                    translatorModal.value.show = false;
-                    playSound('pop');
-                };
-
-                const toggleMic = (side) => {
-                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    if (!SpeechRecognition) {
-                        alert("很抱歉，您的瀏覽器目前不支援語音辨識功能。建議使用 Chrome 或 Safari 瀏覽器。");
-                        return;
-                    }
-
-                    if (translatorModal.value.status === 'listening') {
-                        if (speechRec) {
-                            speechRec.stop();
-                        }
-                        translatorModal.value.status = 'idle';
-                        translatorModal.value.activeMic = null;
-                        return;
-                    }
-
-                    translatorModal.value.activeMic = side;
-                    translatorModal.value.userText = '';
-                    translatorModal.value.targetText = '';
-                    translatorModal.value.status = 'listening';
-
-                    speechRec = new SpeechRecognition();
-                    speechRec.continuous = false;
-                    speechRec.interimResults = false;
-
-                    const langCode = side === 'user' ? translatorModal.value.userLang : translatorModal.value.targetLang;
-                    const langObj = languageOptions.find(l => l.code === langCode);
-                    
-                    speechRec.lang = langObj?.speechCode || 'cmn-Hant-TW';
-
-                    speechRec.onresult = async (event) => {
-                        const transcript = event.results[0][0].transcript;
-                        translatorModal.value.status = 'translating';
-
-                        // 捕捉當下 side 避免非同步後抓取錯誤狀態
-                        const currentMic = side;
-                        const isUser = currentMic === 'user';
-                        const sourceLangCode = isUser ? translatorModal.value.userLang : translatorModal.value.targetLang;
-                        const targetLangCode = isUser ? translatorModal.value.targetLang : translatorModal.value.userLang;
-
-                        const srcCode = sourceLangCode.split('-')[0];
-                        const tgtCode = targetLangCode.split('-')[0];
-
-                        if (isUser) {
-                            translatorModal.value.userText = transcript;
-                            translatorModal.value.targetText = '翻譯中...';
-                        } else {
-                            translatorModal.value.targetText = transcript;
-                            translatorModal.value.userText = '翻譯中...';
-                        }
-
-                        try {
-                            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(transcript)}&langpair=${srcCode}|${tgtCode}`);
-                            const data = await res.json();
-                            if (data && data.responseData && data.responseData.translatedText) {
-                                if (isUser) {
-                                    translatorModal.value.targetText = data.responseData.translatedText;
-                                } else {
-                                    translatorModal.value.userText = data.responseData.translatedText;
-                                }
-                                playSound('success');
-                            } else {
-                                throw new Error('Translation failed');
-                            }
-                        } catch (e) {
-                            if (isUser) translatorModal.value.targetText = '翻譯連線失敗';
-                            else translatorModal.value.userText = '翻譯連線失敗';
-                            playSound('error');
-                        }
-                        
-                        translatorModal.value.status = 'idle';
-                        translatorModal.value.activeMic = null;
-                    };
-
-                    speechRec.onerror = (event) => {
-                        console.error('Speech recognition error', event.error);
-                        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                            alert("請允許麥克風權限才能使用語音翻譯功能。");
-                        } else if (event.error === 'network') {
-                            alert("語音辨識服務網路連線失敗，可能是環境限制或網路異常。");
-                        }
-                        translatorModal.value.status = 'idle';
-                        translatorModal.value.activeMic = null;
-                        playSound('error');
-                    };
-
-                    speechRec.onend = () => {
-                        if(translatorModal.value.status === 'listening') {
-                            translatorModal.value.status = 'idle';
-                            translatorModal.value.activeMic = null;
-                        }
-                    };
-
-                    try {
-                        speechRec.start();
-                        playSound('click');
-                    } catch(e) {
-                        console.error('Speech recognition start error', e);
-                        translatorModal.value.status = 'idle';
-                        translatorModal.value.activeMic = null;
-                    }
-                };
-
                 onMounted(() => {
                     if (window.AudioContext || window.webkitAudioContext) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     
@@ -1835,9 +1784,10 @@
                 }, { deep: true });
 
                 return {
-                    showSplash, splashStep, mainScrollArea, textInputRef, activeTab, activeTripId, activeDay, showSettings, copiedId, textModal, tripModal, categoryModal, iconModal, flightModal, checklistResetModal, checklistItemModal, spotModal, memberModal, confirmModal, translatorModal, languageOptions, viewportStyle, fontSizeLevel, weatherTrendType, collapsedGroups, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers,
+                    showSplash, splashStep, mainScrollArea, textInputRef, activeTab, activeTripId, activeDay, showSettings, copiedId, textModal, tripModal, categoryModal, flightModal, checklistResetModal, checklistItemModal, spotModal, memberModal, confirmModal, iconModal, viewportStyle, fontSizeLevel, weatherTrendType, collapsedGroups, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers,
                     activeTrip, currentDayItinerary, displayExpression, hasOperatorInExpr, weatherTrend, categorizedTrips, calendarYear, calendarMonth, calendarDays, calculatedResultFormatted, evaluatedBaseFormatted, currentDateShort, currentDayOfWeek, greetingText, currencyList, formatDayTab, isFlightPassed,
-                    playSound, getCurrencySym, getTripDateRange, toggleGroup, switchTab, openTrip, switchDay, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, deleteTrip, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, openSpotModal, saveSpot, deleteSpot, addArea, removeArea, toggleCheck, openCategoryModal, saveCategory, deleteCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, deleteChecklistItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, updateRootFontSize, availableIcons, tabs, openMaps, getCategoryProgress, requestConfirm, execConfirm, openVoiceTranslator, closeTranslator, toggleMic
+                    playSound, getCurrencySym, getTripDateRange, toggleGroup, switchTab, openTrip, switchDay, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, deleteTrip, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, openSpotModal, saveSpot, deleteSpot, addArea, removeArea, toggleCheck, openCategoryModal, saveCategory, deleteCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, deleteChecklistItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, updateRootFontSize, availableIcons, tabs, openMaps, getCategoryProgress, requestConfirm, execConfirm,
+                    translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen
                 };
             }
         }).mount('#app');
