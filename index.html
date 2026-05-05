@@ -434,21 +434,30 @@
                 <div v-else-if="activeTab === 'tools'" key="tools" class="px-5 pt-6 space-y-8 pb-20">
                     <div class="mb-2"><h2 class="text-lg font-bold text-muji-ink tracking-wide">旅行工具箱</h2></div>
                     
-                    <div class="grid grid-cols-2 gap-4">
-                        <!-- 雙向語音翻譯 -->
-                        <button @click="openTranslator" class="bg-white rounded-xl p-5 shadow-soft border border-stone-200 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all group">
-                            <div class="w-12 h-12 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-muji-tech group-hover:bg-muji-accent group-hover:text-white transition-colors shadow-sm">
-                                <i class="ph-bold ph-translate text-2xl"></i>
+                    <div class="space-y-5">
+                        <!-- 模組一：AI 智能翻譯 -->
+                        <div class="bg-white rounded-xl p-5 shadow-soft border border-stone-200">
+                            <h3 class="text-sm font-bold text-muji-ink tracking-widest mb-4 flex items-center gap-2"><i class="ph-bold ph-translate text-muji-tech"></i> AI 智能翻譯</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <!-- 雙向對話 -->
+                                <button @click="openTranslator" class="bg-stone-50 rounded-xl p-4 border border-stone-100 flex flex-col items-center justify-center gap-2 hover:bg-stone-100 transition-colors active:scale-95">
+                                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-muji-accent shadow-sm"><i class="ph-bold ph-microphone-stage text-xl"></i></div>
+                                    <span class="text-xs font-bold text-stone-600 tracking-widest mt-1">雙向對話</span>
+                                </button>
+                                <!-- 拍照翻譯 -->
+                                <button @click="openPhotoTranslator" class="bg-stone-50 rounded-xl p-4 border border-stone-100 flex flex-col items-center justify-center gap-2 hover:bg-stone-100 transition-colors active:scale-95">
+                                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-muji-tech shadow-sm"><i class="ph-bold ph-camera text-xl"></i></div>
+                                    <span class="text-xs font-bold text-stone-600 tracking-widest mt-1">拍照翻譯</span>
+                                </button>
                             </div>
-                            <span class="text-[13px] font-bold text-muji-ink tracking-widest">雙向語音翻譯</span>
-                        </button>
-                        
-                        <!-- 其他未來工具站位 -->
-                        <div class="bg-stone-50/50 rounded-xl p-5 border border-stone-200 border-dashed flex flex-col items-center justify-center gap-3 opacity-50">
-                            <div class="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-300">
-                                <i class="ph-bold ph-wrench text-2xl"></i>
+                        </div>
+
+                        <!-- 模組站位：旅費管家 -->
+                        <div class="bg-white/60 rounded-xl p-5 shadow-inner-soft border border-stone-200 border-dashed opacity-70">
+                            <h3 class="text-sm font-bold text-stone-400 tracking-widest mb-4 flex items-center gap-2"><i class="ph-bold ph-wallet"></i> 旅費與分帳 (開發中)</h3>
+                            <div class="flex flex-col items-center justify-center py-4">
+                                <span class="text-xs font-bold text-stone-300 tracking-widest">即將推出智能記帳功能...</span>
                             </div>
-                            <span class="text-[13px] font-bold text-stone-400 tracking-widest">更多工具開發中</span>
                         </div>
                     </div>
                 </div>
@@ -545,22 +554,22 @@
                     </div>
                     <div class="space-y-4 font-bold overflow-y-auto hide-scrollbar max-h-[60vh] px-1 pb-4">
                         <div class="flex gap-3">
-                            <div class="w-1/3">
+                            <div class="w-[110px] shrink-0">
                                 <p class="text-[10px] text-stone-400 font-bold mb-1 tracking-widest">時間</p>
-                                <input type="time" v-model="spotModal.spot.time" class="w-full bg-white border border-stone-200 rounded px-3 py-3 text-sm shadow-inner-soft font-mono">
+                                <input type="time" v-model="spotModal.spot.time" class="w-full bg-white border border-stone-200 rounded px-2 py-3 text-sm shadow-inner-soft font-mono outline-none">
                             </div>
-                            <div class="flex-1">
+                            <div class="flex-1 min-w-0">
                                 <p class="text-[10px] text-stone-400 font-bold mb-1 tracking-widest">地點名稱</p>
-                                <input v-model="spotModal.spot.name" placeholder="例如：晴空塔" class="w-full bg-white border border-stone-200 rounded px-3 py-3 text-sm shadow-inner-soft">
+                                <input v-model="spotModal.spot.name" placeholder="例如：晴空塔" class="w-full bg-white border border-stone-200 rounded px-3 py-3 text-sm shadow-inner-soft outline-none">
                             </div>
                         </div>
                         <div>
                             <p class="text-[10px] text-stone-400 font-bold mb-1 tracking-widest">導航位置 / Google Map 連結</p>
-                            <input v-model="spotModal.spot.mapUrl" placeholder="貼上完整地址或分享網址" class="w-full bg-white border border-stone-200 rounded px-3 py-3 text-sm shadow-inner-soft">
+                            <input v-model="spotModal.spot.mapUrl" placeholder="貼上完整地址或分享網址" class="w-full bg-white border border-stone-200 rounded px-3 py-3 text-sm shadow-inner-soft outline-none">
                         </div>
                         <div>
                             <p class="text-[10px] text-stone-400 font-bold mb-1 tracking-widest">備註描述</p>
-                            <textarea v-model="spotModal.spot.desc" placeholder="輸入備註或交通提醒..." rows="3" class="w-full bg-white border border-stone-200 rounded px-3 py-3 text-sm shadow-inner-soft"></textarea>
+                            <textarea v-model="spotModal.spot.desc" placeholder="輸入備註或交通提醒..." rows="3" class="w-full bg-white border border-stone-200 rounded px-3 py-3 text-sm shadow-inner-soft outline-none"></textarea>
                         </div>
                         <button v-if="spotModal.mode === 'edit'" @click="deleteSpot" class="w-full py-3 mt-2 rounded-xl border border-red-200 bg-red-50 text-red-500 text-[13px] font-bold tracking-widest active:scale-95 transition-all shadow-sm">刪除此地點</button>
                     </div>
@@ -748,30 +757,30 @@
                                         <button @click="removeFlightLeg(fIdx)" class="w-8 h-8 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center text-stone-400 hover:text-red-500 transition-colors active:scale-90 shadow-sm"><i class="ph-bold ph-trash text-sm"></i></button>
                                     </div>
                                     <div class="grid grid-cols-2 gap-3 font-mono">
-                                        <div><p class="text-[9px] text-stone-400 font-bold mb-1">航空公司</p><input v-model="flight.airline" placeholder="星宇航空" class="w-full bg-stone-50 border border-stone-200 rounded px-3 py-2 text-xs font-bold shadow-inner-soft"></div>
-                                        <div><p class="text-[9px] text-stone-400 font-bold mb-1">航班號碼</p><input v-model="flight.no" placeholder="JX800" class="w-full bg-stone-50 border border-stone-200 rounded px-3 py-2 text-xs font-bold uppercase shadow-inner-soft"></div>
+                                        <div class="min-w-0"><p class="text-[9px] text-stone-400 font-bold mb-1">航空公司</p><input v-model="flight.airline" placeholder="星宇航空" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-3 py-2 text-xs font-bold shadow-inner-soft outline-none"></div>
+                                        <div class="min-w-0"><p class="text-[9px] text-stone-400 font-bold mb-1">航班號碼</p><input v-model="flight.no" placeholder="JX800" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-3 py-2 text-xs font-bold uppercase shadow-inner-soft outline-none"></div>
                                     </div>
                                     <div class="grid grid-cols-2 gap-3 font-mono">
-                                        <div><p class="text-[9px] text-stone-400 font-bold mb-1">日期</p><input v-model="flight.date" type="date" class="w-full bg-stone-50 border border-stone-200 rounded px-3 py-2 text-xs font-bold shadow-inner-soft"></div>
-                                        <div><p class="text-[9px] text-stone-400 font-bold mb-1">時間</p><input v-model="flight.time" type="time" class="w-full bg-stone-50 border border-stone-200 rounded px-3 py-2 text-xs font-bold shadow-inner-soft"></div>
+                                        <div class="min-w-0"><p class="text-[9px] text-stone-400 font-bold mb-1">日期</p><input v-model="flight.date" type="date" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs font-bold shadow-inner-soft outline-none"></div>
+                                        <div class="min-w-0"><p class="text-[9px] text-stone-400 font-bold mb-1">時間</p><input v-model="flight.time" type="time" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs font-bold shadow-inner-soft outline-none"></div>
                                     </div>
                                     <div class="grid grid-cols-3 gap-2 font-mono">
-                                        <div><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">出發地</p><input v-model="flight.dep" placeholder="TPE" maxlength="3" class="w-full bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs text-center font-bold uppercase shadow-inner-soft"></div>
-                                        <div><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">目的地</p><input v-model="flight.arr" placeholder="NRT" maxlength="3" class="w-full bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs text-center font-bold uppercase shadow-inner-soft"></div>
-                                        <div><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">航廈</p><input v-model="flight.terminal" placeholder="1" class="w-full bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs text-center font-bold uppercase shadow-inner-soft"></div>
+                                        <div class="min-w-0"><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">出發地</p><input v-model="flight.dep" placeholder="TPE" maxlength="3" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-1 py-2 text-xs text-center font-bold uppercase shadow-inner-soft outline-none"></div>
+                                        <div class="min-w-0"><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">目的地</p><input v-model="flight.arr" placeholder="NRT" maxlength="3" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-1 py-2 text-xs text-center font-bold uppercase shadow-inner-soft outline-none"></div>
+                                        <div class="min-w-0"><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">航廈</p><input v-model="flight.terminal" placeholder="1" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-1 py-2 text-xs text-center font-bold uppercase shadow-inner-soft outline-none"></div>
                                     </div>
                                     <div class="grid grid-cols-3 gap-2 font-mono pt-2 border-t border-stone-100">
-                                        <div>
+                                        <div class="min-w-0">
                                             <p class="text-[9px] text-stone-400 font-bold mb-1">艙等</p>
-                                            <select v-model="flight.cabin" class="w-full bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs font-bold shadow-inner-soft font-mono appearance-none">
-                                                <option value="經濟艙">經濟艙</option>
-                                                <option value="豪華經濟艙">豪華經濟艙</option>
-                                                <option value="商務艙">商務艙</option>
-                                                <option value="頭等艙">頭等艙</option>
+                                            <select v-model="flight.cabin" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-1 py-2 text-[11px] font-bold shadow-inner-soft font-mono appearance-none outline-none">
+                                                <option value="經濟艙">經濟</option>
+                                                <option value="豪華經濟艙">豪經</option>
+                                                <option value="商務艙">商務</option>
+                                                <option value="頭等艙">頭等</option>
                                             </select>
                                         </div>
-                                        <div><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">登機門</p><input v-model="flight.gate" placeholder="--" class="w-full bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs text-center font-bold uppercase shadow-inner-soft"></div>
-                                        <div><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">座位</p><input v-model="flight.seat" placeholder="--" class="w-full bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs text-center font-bold uppercase shadow-inner-soft"></div>
+                                        <div class="min-w-0"><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">登機門</p><input v-model="flight.gate" placeholder="--" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-1 py-2 text-xs text-center font-bold uppercase shadow-inner-soft outline-none"></div>
+                                        <div class="min-w-0"><p class="text-[9px] text-stone-400 font-bold mb-1 text-center">座位</p><input v-model="flight.seat" placeholder="--" class="w-full min-w-0 bg-stone-50 border border-stone-200 rounded px-1 py-2 text-xs text-center font-bold uppercase shadow-inner-soft outline-none"></div>
                                     </div>
                                 </div>
                                 <!-- 修改為流式排版避免重疊 -->
@@ -845,6 +854,22 @@
                                 <button v-for="lv in [1, 2, 3]" :key="lv" @click="fontSizeLevel = lv; updateRootFontSize()" class="flex-1 py-2.5 rounded-lg border text-sm font-bold transition-all active:scale-95" :class="fontSizeLevel === lv ? 'bg-muji-ink text-white border-muji-ink shadow-md' : 'bg-stone-50 text-stone-400 border-stone-100'">A<span v-if="lv > 1">{{ lv === 2 ? '+' : '++' }}</span></button>
                             </div>
                         </div>
+                        
+                        <!-- 新增：API Key 設定區塊 -->
+                        <div class="bg-white rounded-xl p-5 border border-stone-200 shadow-soft">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-bold text-muji-ink tracking-widest font-mono">翻譯 API 金鑰</span>
+                                <i class="ph-fill ph-translate text-muji-tech text-lg"></i>
+                            </div>
+                            <p class="text-[10px] text-stone-400 mb-4 font-bold leading-relaxed">請輸入您的 Google Gemini API Key 以啟用雙向語音翻譯。此金鑰僅會安全地儲存於您目前的裝置瀏覽器中。</p>
+                            <div class="flex gap-2">
+                                <input type="password" v-model="tempApiKey" placeholder="AIzaSy..." class="flex-1 min-w-0 bg-stone-50 border border-stone-200 rounded px-3 py-2.5 text-xs font-mono shadow-inner-soft focus:border-muji-ink transition-colors outline-none text-stone-600">
+                                <button @click="saveApiKey" class="shrink-0 px-4 rounded text-white font-bold text-[11px] tracking-widest active:scale-95 transition-all flex items-center justify-center min-w-[64px]" :class="apiKeySaved ? 'bg-green-500' : 'bg-muji-ink'">
+                                    <span v-if="apiKeySaved"><i class="ph-bold ph-check text-sm"></i></span>
+                                    <span v-else>確認</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -901,9 +926,9 @@
                         <!-- 文字顯示區 -->
                         <div class="flex-1 flex flex-col items-center justify-center text-center space-y-4 overflow-y-auto hide-scrollbar w-full px-4">
                             <!-- 顯示翻譯後的對方語言結果給對方看 -->
-                            <p v-if="transTop.translated" class="text-3xl font-bold text-muji-accent drop-shadow-md leading-tight">{{ transTop.translated }}</p>
+                            <p v-if="transTop.translated" class="font-bold drop-shadow-md leading-tight" :class="transTop.translated.startsWith('⚠️') ? 'text-red-400 text-lg' : 'text-muji-accent text-3xl'">{{ transTop.translated }}</p>
                             <!-- 顯示對方正在說的話 (辨識結果) -->
-                            <p v-if="transTop.recognized" class="text-lg text-stone-300 leading-snug">{{ transTop.recognized }}</p>
+                            <p v-if="transTop.recognized" class="text-lg leading-snug" :class="transTop.recognized.startsWith('⚠️') ? 'text-red-400' : 'text-stone-300'">{{ transTop.recognized }}</p>
                             
                             <p v-if="!transTop.translated && !transTop.recognized" class="text-stone-500 text-xs tracking-widest font-mono">等待發言...</p>
                             <p v-if="isTranslating" class="text-[10px] text-stone-400 animate-pulse flex items-center gap-1 font-mono tracking-widest"><i class="ph-bold ph-spinner animate-spin"></i> 翻譯中...</p>
@@ -934,9 +959,9 @@
                         <!-- 文字顯示區 -->
                         <div class="flex-1 flex flex-col items-center justify-center text-center space-y-4 overflow-y-auto hide-scrollbar w-full px-4">
                             <!-- 顯示翻譯後的自己語言結果給自己看 -->
-                            <p v-if="transBottom.translated" class="text-3xl font-bold text-muji-accent drop-shadow-sm leading-tight">{{ transBottom.translated }}</p>
+                            <p v-if="transBottom.translated" class="font-bold drop-shadow-sm leading-tight" :class="transBottom.translated.startsWith('⚠️') ? 'text-red-500 text-lg' : 'text-muji-accent text-3xl'">{{ transBottom.translated }}</p>
                             <!-- 顯示自己正在說的話 (辨識結果) -->
-                            <p v-if="transBottom.recognized" class="text-lg text-stone-500 leading-snug">{{ transBottom.recognized }}</p>
+                            <p v-if="transBottom.recognized" class="text-lg leading-snug" :class="transBottom.recognized.startsWith('⚠️') ? 'text-red-500' : 'text-stone-500'">{{ transBottom.recognized }}</p>
                             
                             <p v-if="!transBottom.translated && !transBottom.recognized" class="text-stone-400 text-xs tracking-widest font-mono">等待發言...</p>
                             <p v-if="isTranslating" class="text-[10px] text-muji-tech animate-pulse flex items-center gap-1 font-mono tracking-widest"><i class="ph-bold ph-spinner animate-spin"></i> 翻譯中...</p>
@@ -946,6 +971,75 @@
                             <button @click="toggleListen('bottom')" class="w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg border-4" :class="transBottom.isListening ? 'bg-red-500 text-white border-red-200 animate-pulse scale-105' : 'bg-white text-muji-ink border-stone-100 active:scale-95'">
                                 <i class="ph-fill ph-microphone text-2xl"></i>
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 拍照翻譯 Modal -->
+        <transition name="modal">
+            <div v-if="photoTranslatorModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8500]" :style="viewportStyle" @click.self="closePhotoTranslator">
+                <div class="modal-panel bg-muji-bg w-full max-w-md h-[90vh] rounded-t-xl p-6 flex flex-col relative font-sans border-t border-white/20 shadow-2xl">
+                    <div class="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-6 shrink-0 opacity-40"></div>
+                    <div class="flex justify-between items-center mb-6 px-1 shrink-0">
+                        <h2 class="text-lg font-bold tracking-widest text-muji-ink flex items-center gap-2"><i class="ph-bold ph-camera text-muji-tech"></i> 拍照翻譯</h2>
+                        <button @click="closePhotoTranslator" class="w-8 h-8 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center active:scale-90 text-stone-400 shadow-sm hover:text-muji-ink transition-colors"><i class="ph-bold ph-x text-sm"></i></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto hide-scrollbar space-y-5 pb-6">
+                        <!-- 隱藏的檔案上傳輸入框 -->
+                        <input type="file" ref="photoInputRef" accept="image/*" capture="environment" @change="handlePhotoUpload" class="hidden" />
+
+                        <!-- 圖片預覽與上傳區 -->
+                        <div class="w-full aspect-[4/3] bg-stone-100 rounded-xl border-2 border-dashed border-stone-300 relative overflow-hidden flex items-center justify-center shadow-inner-soft group">
+                            <template v-if="photoImage">
+                                <img :src="photoImage" class="w-full h-full object-contain bg-black/5" />
+                                <button @click="triggerCamera" class="absolute bottom-3 right-3 bg-white/90 backdrop-blur border border-stone-200 text-muji-ink text-[10px] font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 active:scale-95"><i class="ph-bold ph-camera-rotate"></i> 重拍</button>
+                            </template>
+                            <template v-else>
+                                <div @click="triggerCamera" class="absolute inset-0 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform text-stone-400 hover:text-muji-ink hover:bg-white/50">
+                                    <div class="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-3"><i class="ph-bold ph-camera-plus text-2xl"></i></div>
+                                    <p class="text-xs font-bold tracking-widest">點擊拍攝欲翻譯之文字</p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- 翻譯設定與操作 -->
+                        <div class="flex items-end gap-3" :class="{'opacity-50 pointer-events-none': isPhotoTranslating}">
+                            <div class="flex-1">
+                                <p class="text-[10px] text-stone-400 font-bold mb-1 tracking-widest font-mono">翻譯成</p>
+                                <select v-model="photoTargetLang" class="w-full bg-white border border-stone-200 rounded-lg px-3 py-3 text-sm font-bold shadow-sm focus:border-muji-ink transition-colors outline-none cursor-pointer">
+                                    <option v-for="l in transLanguages" :key="l.code" :value="l.code">{{ l.name }}</option>
+                                </select>
+                            </div>
+                            <button @click="doPhotoTranslate" class="h-[46px] px-6 rounded-lg font-bold text-[13px] tracking-widest shadow-sm active:scale-95 transition-all flex items-center gap-2" :class="isPhotoTranslating ? 'bg-stone-200 text-stone-400' : 'bg-muji-ink text-white'">
+                                <i v-if="isPhotoTranslating" class="ph-bold ph-spinner animate-spin"></i>
+                                <span v-else><i class="ph-bold ph-translate"></i> 翻譯</span>
+                            </button>
+                        </div>
+
+                        <!-- 翻譯結果區 (永遠顯示框體，提升 UX) -->
+                        <div class="bg-white rounded-xl border border-stone-200 p-5 shadow-soft relative min-h-[140px] flex flex-col">
+                            <p class="text-[10px] text-stone-400 font-bold mb-3 tracking-widest font-mono flex items-center justify-between">
+                                翻譯結果
+                                <button v-if="photoResult && !photoResult.startsWith('⚠️')" @click="copyText(photoResult, 'photo-result')" class="text-muji-tech hover:text-muji-ink active:scale-90 p-1"><i :class="copiedId === 'photo-result' ? 'ph-bold ph-check text-green-500' : 'ph-bold ph-copy'"></i></button>
+                            </p>
+                            
+                            <div class="flex-1 relative">
+                                <div v-if="isPhotoTranslating" class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-xl z-10">
+                                    <div class="w-8 h-8 border-2 border-stone-200 border-t-muji-accent rounded-full animate-spin mb-2"></div>
+                                    <span class="text-[10px] font-bold text-stone-400 tracking-widest font-mono animate-pulse">AI 正在努力識別圖片...</span>
+                                </div>
+                                
+                                <div v-else-if="photoResult" class="text-sm leading-relaxed whitespace-pre-wrap font-medium" :class="photoResult.startsWith('⚠️') ? 'text-red-500' : 'text-muji-ink'">
+                                    {{ photoResult }}
+                                </div>
+                                
+                                <div v-else class="absolute inset-0 flex items-center justify-center text-stone-300 text-xs tracking-widest font-bold font-mono">
+                                    翻譯結果將顯示於此
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1041,6 +1135,16 @@
                 const transBottom = ref({ lang: 'zh-TW', recognized: '', translated: '', isListening: false });
                 let speechRecognitionInstance = null;
 
+                // 拍照翻譯狀態
+                const photoInputRef = ref(null);
+                const photoTranslatorModal = ref({ show: false });
+                const photoImage = ref(null); // 用於 UI 預覽 (Data URL)
+                const photoBase64 = ref(null); // 用於 API 傳送 (純 Base64)
+                const photoMimeType = ref(null);
+                const photoTargetLang = ref('zh-TW');
+                const photoResult = ref('');
+                const isPhotoTranslating = ref(false);
+
                 const viewportStyle = ref({ height: '100vh', top: '0px' });
                 
                 const fontSizeLevel = ref(1);
@@ -1054,6 +1158,20 @@
                 const isFetchingRate = ref(false);
                 const rateUpdateStatus = ref(null);
                 const calcExpression = ref('');
+
+                // API Key 狀態與本地儲存讀取
+                const savedApiKey = localStorage.getItem('cotabi_apikey') || '';
+                const tempApiKey = ref(savedApiKey); // 暫存輸入框的值
+                const userApiKey = ref(savedApiKey); // 實際被翻譯功能使用的值
+                const apiKeySaved = ref(false); // 控制確認按鈕的動畫狀態
+
+                const saveApiKey = () => {
+                    userApiKey.value = tempApiKey.value;
+                    localStorage.setItem('cotabi_apikey', tempApiKey.value);
+                    playSound('success');
+                    apiKeySaved.value = true;
+                    setTimeout(() => { apiKeySaved.value = false; }, 2000);
+                };
 
                 // Constants
                 const currencyList = [
@@ -1287,19 +1405,20 @@
 
                 const doTranslate = async (text, fromLang, toLang, fromSide) => {
                     if (!text) return;
+                    
                     isTranslating.value = true;
                     try {
-                        const apiKey = "";
+                        const apiKey = userApiKey.value.trim();
                         const prompt = `Translate the following text from ${fromLang} to ${toLang}. Only return the translated text without any quotes or explanations. Text: "${text}"`;
                         const payload = { contents: [{ parts: [{ text: prompt }] }] };
                         
-                        const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                        const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
 
-                        const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '翻譯失敗';
+                        const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '⚠️ 翻譯失敗，請重試。';
 
                         if (fromSide === 'top') {
                             transBottom.value.translated = translatedText;
@@ -1307,11 +1426,14 @@
                             transTop.value.translated = translatedText;
                         }
                         playSound('success');
-                        speakText(translatedText, toLang); // 語音合成念出翻譯
+                        
+                        if (!translatedText.startsWith('⚠️')) {
+                            speakText(translatedText, toLang);
+                        }
 
                     } catch (error) {
                         console.error("Translation error", error);
-                        const errTxt = '(翻譯發生錯誤，請重試)';
+                        const errTxt = '⚠️ 翻譯發生錯誤，請檢查網路連線或 API Key 是否正確。';
                         if (fromSide === 'top') transBottom.value.translated = errTxt;
                         else transTop.value.translated = errTxt;
                         playSound('error');
@@ -1323,6 +1445,13 @@
                 const toggleListen = (side) => {
                     const sourceState = side === 'top' ? transTop.value : transBottom.value;
                     const targetState = side === 'top' ? transBottom.value : transTop.value;
+
+                    // 防呆：檢查使用者是否已輸入 API Key (在啟動麥克風前攔截)
+                    if (!userApiKey.value || userApiKey.value.trim() === '') {
+                        sourceState.recognized = '⚠️ 請先至右上角設定輸入翻譯 API 金鑰';
+                        playSound('error');
+                        return;
+                    }
 
                     // 若正在收聽，則停止
                     if (sourceState.isListening) {
@@ -1339,7 +1468,8 @@
 
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                     if (!SpeechRecognition) {
-                        alert('您的瀏覽器不支援語音識別功能，請嘗試使用最新版 Chrome 或 Safari。');
+                        sourceState.recognized = '⚠️ 您的瀏覽器不支援語音識別功能，請嘗試使用最新版 Chrome 或 Safari。';
+                        playSound('error');
                         return;
                     }
 
@@ -1348,6 +1478,10 @@
                     speechRecognitionInstance.lang = sourceState.lang;
                     speechRecognitionInstance.interimResults = true;
                     speechRecognitionInstance.continuous = false;
+
+                    sourceState.isListening = true;
+                    sourceState.recognized = '';
+                    targetState.translated = ''; // 清除另一側的舊翻譯結果
 
                     speechRecognitionInstance.onresult = (event) => {
                         let finalTranscript = '';
@@ -1360,7 +1494,7 @@
                     };
 
                     speechRecognitionInstance.onerror = (event) => {
-                        console.warn("Speech recognition warning:", event.error); // 避免觸發控制台紅色錯誤
+                        console.warn("Speech recognition warning:", event.error);
                         sourceState.isListening = false;
                         if (event.error === 'network') {
                             sourceState.recognized = '⚠️ 語音連線失敗，請檢查網路或瀏覽器限制';
@@ -1380,6 +1514,95 @@
                     };
 
                     speechRecognitionInstance.start();
+                };
+
+                // 拍照翻譯功能邏輯
+                const openPhotoTranslator = () => {
+                    photoTranslatorModal.value.show = true;
+                    photoImage.value = null;
+                    photoBase64.value = null;
+                    photoResult.value = '';
+                    isPhotoTranslating.value = false;
+                    playSound('pop');
+                };
+
+                const closePhotoTranslator = () => {
+                    photoTranslatorModal.value.show = false;
+                    playSound('pop');
+                };
+
+                const triggerCamera = () => {
+                    if (photoInputRef.value) photoInputRef.value.click();
+                };
+
+                const handlePhotoUpload = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
+                    photoMimeType.value = file.type;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        photoImage.value = e.target.result; 
+                        // 取出 data:image/jpeg;base64, 後面的純 Base64 字串
+                        photoBase64.value = e.target.result.split(',')[1]; 
+                        photoResult.value = ''; // 清除舊結果
+                        playSound('pop');
+                    };
+                    reader.readAsDataURL(file);
+                };
+
+                const doPhotoTranslate = async () => {
+                    // 防呆：攔截未輸入 API Key
+                    if (!userApiKey.value || userApiKey.value.trim() === '') {
+                        photoResult.value = '⚠️ 請先至右上角設定輸入翻譯 API 金鑰';
+                        playSound('error');
+                        return;
+                    }
+                    
+                    // 防呆：攔截未拍攝/上傳圖片
+                    if (!photoBase64.value) {
+                        photoResult.value = '⚠️ 請先點擊上方區域拍攝或上傳欲翻譯之圖片';
+                        playSound('error');
+                        return;
+                    }
+
+                    isPhotoTranslating.value = true;
+                    photoResult.value = '';
+                    
+                    try {
+                        const apiKey = userApiKey.value.trim();
+                        const targetLangName = transLanguages.find(l => l.code === photoTargetLang.value)?.name || 'Traditional Chinese';
+                        
+                        // 提示詞要求 AI 提取文字並翻譯
+                        const prompt = `Please act as a helpful translator. Extract all the text you can read from this image and translate it into ${targetLangName}. 
+If it's a menu, list the items and their translations clearly. If it's a sign, just provide the translated meaning. 
+Do not include raw markdown formatting like backticks, just clean text.`;
+
+                        const payload = {
+                            contents: [{
+                                parts: [
+                                    { text: prompt },
+                                    { inlineData: { mimeType: photoMimeType.value, data: photoBase64.value } }
+                                ]
+                            }]
+                        };
+                        
+                        const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        photoResult.value = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '⚠️ 無法辨識圖片中的文字或翻譯失敗。';
+                        playSound('success');
+
+                    } catch (error) {
+                        console.error("Photo Translation error", error);
+                        photoResult.value = '⚠️ 解析圖片時發生錯誤，請檢查網路連線或 API Key 是否正確。';
+                        playSound('error');
+                    } finally {
+                        isPhotoTranslating.value = false;
+                    }
                 };
 
                 const toggleGroup = (key) => { collapsedGroups.value[key] = !collapsedGroups.value[key]; playSound('pop'); };
@@ -1783,11 +2006,17 @@
                     localStorage.setItem('cotabi_trips_v46', JSON.stringify(trips.value));
                 }, { deep: true });
 
+                // 監聽 API Key 變更並存入本地儲存
+                watch(userApiKey, (newVal) => {
+                    localStorage.setItem('cotabi_apikey', newVal);
+                });
+
                 return {
                     showSplash, splashStep, mainScrollArea, textInputRef, activeTab, activeTripId, activeDay, showSettings, copiedId, textModal, tripModal, categoryModal, flightModal, checklistResetModal, checklistItemModal, spotModal, memberModal, confirmModal, iconModal, viewportStyle, fontSizeLevel, weatherTrendType, collapsedGroups, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers,
                     activeTrip, currentDayItinerary, displayExpression, hasOperatorInExpr, weatherTrend, categorizedTrips, calendarYear, calendarMonth, calendarDays, calculatedResultFormatted, evaluatedBaseFormatted, currentDateShort, currentDayOfWeek, greetingText, currencyList, formatDayTab, isFlightPassed,
                     playSound, getCurrencySym, getTripDateRange, toggleGroup, switchTab, openTrip, switchDay, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, deleteTrip, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, openSpotModal, saveSpot, deleteSpot, addArea, removeArea, toggleCheck, openCategoryModal, saveCategory, deleteCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, deleteChecklistItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, updateRootFontSize, availableIcons, tabs, openMaps, getCategoryProgress, requestConfirm, execConfirm,
-                    translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen
+                    translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen, userApiKey, tempApiKey, apiKeySaved, saveApiKey,
+                    photoTranslatorModal, photoImage, isPhotoTranslating, photoTargetLang, photoResult, photoInputRef, openPhotoTranslator, closePhotoTranslator, triggerCamera, handlePhotoUpload, doPhotoTranslate
                 };
             }
         }).mount('#app');
