@@ -1413,10 +1413,19 @@
                     isTranslating.value = true;
                     try {
                         const apiKey = userApiKey.value.trim();
+                        if (!apiKey) {
+                            const errTxt = '⚠️ 請先至右上角設定輸入 API Key';
+                            if (fromSide === 'top') transBottom.value.translated = errTxt;
+                            else transTop.value.translated = errTxt;
+                            playSound('error');
+                            isTranslating.value = false;
+                            return;
+                        }
+
                         const prompt = `Translate the following text from ${fromLang} to ${toLang}. Only return the translated text without any quotes or explanations. Text: "${text}"`;
                         const payload = { contents: [{ parts: [{ text: prompt }] }] };
                         
-                        // 修正：使用公開支援的 gemini-1.5-flash 模型
+                        // 正式部署版：使用公開穩定的 gemini-1.5-flash 模型
                         const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1563,7 +1572,7 @@
                         playSound('error');
                         return;
                     }
-                    
+
                     // 防呆：攔截未拍攝/上傳圖片
                     if (!photoBase64.value) {
                         photoResult.value = '⚠️ 請先點擊上方區域拍攝或上傳欲翻譯之圖片';
@@ -1585,7 +1594,6 @@ Do not include raw markdown formatting like backticks, just clean text.`;
 
                         const payload = {
                             contents: [{
-                                role: "user",
                                 parts: [
                                     { text: prompt },
                                     { inlineData: { mimeType: photoMimeType.value, data: photoBase64.value } }
@@ -1593,7 +1601,7 @@ Do not include raw markdown formatting like backticks, just clean text.`;
                             }]
                         };
                         
-                        // 修正：使用公開支援的 gemini-1.5-flash 模型
+                        // 正式部署版：使用公開穩定的 gemini-1.5-flash 模型
                         const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
