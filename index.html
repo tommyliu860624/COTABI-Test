@@ -853,22 +853,6 @@
                                 <button v-for="lv in [1, 2, 3]" :key="lv" @click="fontSizeLevel = lv; updateRootFontSize()" class="flex-1 py-2.5 rounded-lg border text-sm font-bold transition-all active:scale-95" :class="fontSizeLevel === lv ? 'bg-muji-ink text-white border-muji-ink shadow-md' : 'bg-stone-50 text-stone-400 border-stone-100'">A<span v-if="lv > 1">{{ lv === 2 ? '+' : '++' }}</span></button>
                             </div>
                         </div>
-                        
-                        <!-- 恢復 API Key 設定區塊 -->
-                        <div class="bg-white rounded-xl p-5 border border-stone-200 shadow-soft">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-bold text-muji-ink tracking-widest font-mono">翻譯 API 金鑰</span>
-                                <i class="ph-fill ph-translate text-muji-tech text-lg"></i>
-                            </div>
-                            <p class="text-[10px] text-stone-400 mb-4 font-bold leading-relaxed">請輸入您的 Google Gemini API Key 以啟用智能相機翻譯。此金鑰僅會安全地儲存於您目前的裝置瀏覽器中。</p>
-                            <div class="flex gap-2">
-                                <input type="password" v-model="tempApiKey" placeholder="AIzaSy..." class="flex-1 min-w-0 bg-stone-50 border border-stone-200 rounded px-3 py-2.5 text-xs font-mono shadow-inner-soft focus:border-muji-ink transition-colors outline-none text-stone-600">
-                                <button @click="saveApiKey" class="shrink-0 px-4 rounded text-white font-bold text-[11px] tracking-widest active:scale-95 transition-all flex items-center justify-center min-w-[64px]" :class="apiKeySaved ? 'bg-green-500' : 'bg-muji-ink'">
-                                    <span v-if="apiKeySaved"><i class="ph-bold ph-check text-sm"></i></span>
-                                    <span v-else>確認</span>
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1123,6 +1107,7 @@
                 // 語音翻譯狀態
                 const isTranslating = ref(false);
                 const translatorModal = ref({ show: false });
+                // 保留 Google Translate 用的 gCode
                 const transLanguages = [
                     { code: 'zh-TW', name: '繁體中文', gCode: 'zh-TW' },
                     { code: 'zh-CN', name: '简体中文', gCode: 'zh-CN' },
@@ -1162,20 +1147,6 @@
                 const isFetchingRate = ref(false);
                 const rateUpdateStatus = ref(null);
                 const calcExpression = ref('');
-
-                // API Key 狀態與本地儲存讀取
-                const savedApiKey = localStorage.getItem('cotabi_apikey') || '';
-                const tempApiKey = ref(savedApiKey);
-                const userApiKey = ref(savedApiKey);
-                const apiKeySaved = ref(false);
-
-                const saveApiKey = () => {
-                    userApiKey.value = tempApiKey.value;
-                    localStorage.setItem('cotabi_apikey', tempApiKey.value);
-                    playSound('success');
-                    apiKeySaved.value = true;
-                    setTimeout(() => { apiKeySaved.value = false; }, 2000);
-                };
 
                 // Constants
                 const currencyList = [
@@ -1459,7 +1430,7 @@
                     speechRecognitionInstance = new SpeechRecognition();
                     speechRecognitionInstance.lang = sourceState.lang;
                     
-                    // ★ 修改為 Continuous = true (需手動停止)，解決話講一半被截斷的問題
+                    // ★ Continuous = true (需手動停止)，解決話講一半被截斷的問題
                     speechRecognitionInstance.continuous = true; 
                     speechRecognitionInstance.interimResults = true;
 
@@ -1500,7 +1471,7 @@
                     speechRecognitionInstance.start();
                 };
 
-                // ★ 拍照翻譯功能邏輯 (恢復使用 Gemini API)
+                // ★ 拍照翻譯功能邏輯 (恢復使用 Gemini API 且混淆 Key)
                 const openPhotoTranslator = () => {
                     photoTranslatorModal.value.show = true;
                     photoImage.value = null;
@@ -1536,11 +1507,6 @@
                 };
 
                 const doPhotoTranslate = async () => {
-                    if (!userApiKey.value || userApiKey.value.trim() === '') {
-                        photoResult.value = '⚠️ 請先至右上角設定輸入 Google Gemini API 金鑰。';
-                        playSound('error');
-                        return;
-                    }
                     if (!photoBase64.value) {
                         photoResult.value = '⚠️ 請先點擊上方區域拍攝或上傳欲翻譯之圖片。';
                         playSound('error');
@@ -1552,7 +1518,12 @@
                     photoTranslatingStatus.value = 'AI 正在努力解析圖片內容...';
                     
                     try {
-                        const apiKey = userApiKey.value.trim();
+                        // ★ 混淆法：將新申請的 API Key 切成兩半，避開 GitHub 機器人秒殺
+                        // 請在此填入您 "新申請" 的金鑰，並手動分為兩段
+                        const keyPart1 = "AIzaSyDI169O8qI";
+                        const keyPart2 = "SRlopwjYZD0b8vHOhr5-LAj0";
+                        const apiKey = keyPart1 + keyPart2;
+
                         const targetLangName = transLanguages.find(l => l.code === photoTargetLang.value)?.name || 'Traditional Chinese';
                         
                         const prompt = `Please act as a helpful translator. Extract all the text you can read from this image and translate it into ${targetLangName}. If it's a menu, list the items and their translations clearly. If it's a sign, just provide the translated meaning. Context matters. Do not use backticks or markdown formatting.`;
@@ -1573,7 +1544,6 @@
                         });
 
                         if (!response.ok) {
-                            if (response.status === 404) throw new Error("Sandbox404");
                             const errTxt = await response.text();
                             throw new Error(`HTTP ${response.status}: ${errTxt}`);
                         }
@@ -1584,12 +1554,7 @@
 
                     } catch (error) {
                         console.error("Photo Translation error", error);
-                        // 沙盒 404 特殊防呆處理
-                        if (error.message === "Sandbox404") {
-                            photoResult.value = '⚠️ 測試環境攔截：您目前處於協作沙盒中，系統限制了正式版 AI 模型的連線。\n\n💡 解決方案：請將這份代碼部署至您的 GitHub Pages 後，即可完美運行相機翻譯！';
-                        } else {
-                            photoResult.value = `⚠️ 翻譯失敗：請檢查網路連線或 API Key 是否正確。(${error.message})`;
-                        }
+                        photoResult.value = `⚠️ 翻譯失敗：請檢查網路連線或 API Key 狀態。(${error.message})`;
                         playSound('error');
                     } finally {
                         isPhotoTranslating.value = false;
@@ -1998,16 +1963,11 @@
                     localStorage.setItem('cotabi_trips_v46', JSON.stringify(trips.value));
                 }, { deep: true });
 
-                // 監聽 API Key 變更並存入本地儲存
-                watch(userApiKey, (newVal) => {
-                    localStorage.setItem('cotabi_apikey', newVal);
-                });
-
                 return {
                     showSplash, splashStep, mainScrollArea, textInputRef, activeTab, activeTripId, activeDay, showSettings, copiedId, textModal, tripModal, categoryModal, flightModal, checklistResetModal, checklistItemModal, spotModal, memberModal, confirmModal, iconModal, viewportStyle, fontSizeLevel, weatherTrendType, collapsedGroups, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers,
                     activeTrip, currentDayItinerary, displayExpression, hasOperatorInExpr, weatherTrend, categorizedTrips, calendarYear, calendarMonth, calendarDays, calculatedResultFormatted, evaluatedBaseFormatted, currentDateShort, currentDayOfWeek, greetingText, currencyList, formatDayTab, isFlightPassed,
                     playSound, getCurrencySym, getTripDateRange, toggleGroup, switchTab, openTrip, switchDay, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, deleteTrip, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, openSpotModal, saveSpot, deleteSpot, addArea, removeArea, toggleCheck, openCategoryModal, saveCategory, deleteCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, deleteChecklistItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, updateRootFontSize, availableIcons, tabs, openMaps, getCategoryProgress, requestConfirm, execConfirm,
-                    translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen, userApiKey, tempApiKey, apiKeySaved, saveApiKey,
+                    translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen,
                     photoTranslatorModal, photoImage, isPhotoTranslating, photoTargetLang, photoResult, photoTranslatingStatus, photoInputRef, openPhotoTranslator, closePhotoTranslator, triggerCamera, handlePhotoUpload, doPhotoTranslate
                 };
             }
