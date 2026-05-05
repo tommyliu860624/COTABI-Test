@@ -1385,7 +1385,11 @@
                     for (let i = 0; i < retries; i++) {
                         try {
                             const res = await fetch(url, options);
-                            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                            if (!res.ok) {
+                                // 捕捉並拋出詳細的 Google API 錯誤訊息以便除錯
+                                const errText = await res.text();
+                                throw new Error(`HTTP ${res.status}: ${errText}`);
+                            }
                             return await res.json();
                         } catch (e) {
                             if (i === retries - 1) throw e;
@@ -1412,6 +1416,7 @@
                         const prompt = `Translate the following text from ${fromLang} to ${toLang}. Only return the translated text without any quotes or explanations. Text: "${text}"`;
                         const payload = { contents: [{ parts: [{ text: prompt }] }] };
                         
+                        // 修正：使用公開支援的 gemini-1.5-flash 模型
                         const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1580,6 +1585,7 @@ Do not include raw markdown formatting like backticks, just clean text.`;
 
                         const payload = {
                             contents: [{
+                                role: "user",
                                 parts: [
                                     { text: prompt },
                                     { inlineData: { mimeType: photoMimeType.value, data: photoBase64.value } }
@@ -1587,6 +1593,7 @@ Do not include raw markdown formatting like backticks, just clean text.`;
                             }]
                         };
                         
+                        // 修正：使用公開支援的 gemini-1.5-flash 模型
                         const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
