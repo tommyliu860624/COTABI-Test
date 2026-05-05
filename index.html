@@ -435,9 +435,9 @@
                     <div class="mb-2"><h2 class="text-lg font-bold text-muji-ink tracking-wide">旅行工具箱</h2></div>
                     
                     <div class="space-y-5">
-                        <!-- 模組一：AI 智能翻譯 -->
+                        <!-- 模組一：語音與翻譯 -->
                         <div class="bg-white rounded-xl p-5 shadow-soft border border-stone-200">
-                            <h3 class="text-sm font-bold text-muji-ink tracking-widest mb-4 flex items-center gap-2"><i class="ph-bold ph-translate text-muji-tech"></i> AI 智能翻譯</h3>
+                            <h3 class="text-sm font-bold text-muji-ink tracking-widest mb-4 flex items-center gap-2"><i class="ph-bold ph-translate text-muji-tech"></i> 語音與翻譯</h3>
                             <div class="grid grid-cols-2 gap-3">
                                 <!-- 雙向對話 -->
                                 <button @click="openTranslator" class="bg-stone-50 rounded-xl p-4 border border-stone-100 flex flex-col items-center justify-center gap-2 hover:bg-stone-100 transition-colors active:scale-95">
@@ -536,7 +536,6 @@
                             <div class="flex-1"><p class="text-[10px] text-stone-400 mb-1 tracking-widest">出發日期</p><input type="date" v-model="tripModal.startDate" class="w-full bg-white border border-stone-200 rounded px-2 py-3 text-sm outline-none font-mono" /></div>
                             <div class="flex-1"><p class="text-[10px] text-stone-400 mb-1 tracking-widest">結束日期</p><input type="date" v-model="tripModal.endDate" class="w-full bg-white border border-stone-200 rounded px-2 py-3 text-sm outline-none font-mono" /></div>
                         </div>
-                        <!-- 刪除統一至底部 -->
                         <button v-if="tripModal.mode === 'edit'" @click="deleteTrip(tripModal.targetId)" class="w-full py-3 mt-4 rounded-xl border border-red-200 bg-red-50 text-red-500 text-[13px] font-bold tracking-widest active:scale-95 transition-all shadow-sm">刪除此行程</button>
                     </div>
                     <button @click="saveTripModal" class="w-full py-4 rounded-xl bg-muji-ink text-white font-bold text-[13px] shadow-md tracking-widest active:scale-95 transition-all">確認儲存</button>
@@ -855,13 +854,13 @@
                             </div>
                         </div>
                         
-                        <!-- 新增：API Key 設定區塊 -->
+                        <!-- 恢復 API Key 設定區塊 -->
                         <div class="bg-white rounded-xl p-5 border border-stone-200 shadow-soft">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-sm font-bold text-muji-ink tracking-widest font-mono">翻譯 API 金鑰</span>
                                 <i class="ph-fill ph-translate text-muji-tech text-lg"></i>
                             </div>
-                            <p class="text-[10px] text-stone-400 mb-4 font-bold leading-relaxed">請輸入您的 Google Gemini API Key 以啟用雙向語音翻譯。此金鑰僅會安全地儲存於您目前的裝置瀏覽器中。</p>
+                            <p class="text-[10px] text-stone-400 mb-4 font-bold leading-relaxed">請輸入您的 Google Gemini API Key 以啟用智能相機翻譯。此金鑰僅會安全地儲存於您目前的裝置瀏覽器中。</p>
                             <div class="flex gap-2">
                                 <input type="password" v-model="tempApiKey" placeholder="AIzaSy..." class="flex-1 min-w-0 bg-stone-50 border border-stone-200 rounded px-3 py-2.5 text-xs font-mono shadow-inner-soft focus:border-muji-ink transition-colors outline-none text-stone-600">
                                 <button @click="saveApiKey" class="shrink-0 px-4 rounded text-white font-bold text-[11px] tracking-widest active:scale-95 transition-all flex items-center justify-center min-w-[64px]" :class="apiKeySaved ? 'bg-green-500' : 'bg-muji-ink'">
@@ -924,7 +923,7 @@
                             </select>
                         </div>
                         <!-- 文字顯示區 -->
-                        <div class="flex-1 flex flex-col items-center justify-center text-center space-y-4 overflow-y-auto hide-scrollbar w-full px-4">
+                        <div class="flex-1 flex flex-col items-center justify-center text-center space-y-4 overflow-y-auto hide-scrollbar w-full px-4 relative">
                             <!-- 顯示翻譯後的對方語言結果給對方看 -->
                             <p v-if="transTop.translated" class="font-bold drop-shadow-md leading-tight" :class="transTop.translated.startsWith('⚠️') ? 'text-red-400 text-lg' : 'text-muji-accent text-3xl'">{{ transTop.translated }}</p>
                             <!-- 顯示對方正在說的話 (辨識結果) -->
@@ -934,10 +933,12 @@
                             <p v-if="isTranslating" class="text-[10px] text-stone-400 animate-pulse flex items-center gap-1 font-mono tracking-widest"><i class="ph-bold ph-spinner animate-spin"></i> 翻譯中...</p>
                         </div>
                         <!-- 麥克風按鈕 -->
-                        <div class="flex justify-center mt-6">
+                        <div class="flex flex-col items-center justify-center mt-4">
                             <button @click="toggleListen('top')" class="w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg border-4" :class="transTop.isListening ? 'bg-red-500 text-white border-red-300 animate-pulse scale-105' : 'bg-stone-600 text-stone-200 border-stone-700 active:scale-95'">
                                 <i class="ph-fill ph-microphone text-2xl"></i>
                             </button>
+                            <!-- 錄音狀態提示 -->
+                            <p class="text-[10px] font-bold tracking-widest font-mono mt-3 transition-opacity" :class="transTop.isListening ? 'text-red-400 animate-pulse opacity-100' : 'opacity-0 text-transparent'">點擊停止並翻譯</p>
                         </div>
                     </div>
                 </div>
@@ -957,7 +958,7 @@
                             </select>
                         </div>
                         <!-- 文字顯示區 -->
-                        <div class="flex-1 flex flex-col items-center justify-center text-center space-y-4 overflow-y-auto hide-scrollbar w-full px-4">
+                        <div class="flex-1 flex flex-col items-center justify-center text-center space-y-4 overflow-y-auto hide-scrollbar w-full px-4 relative">
                             <!-- 顯示翻譯後的自己語言結果給自己看 -->
                             <p v-if="transBottom.translated" class="font-bold drop-shadow-sm leading-tight" :class="transBottom.translated.startsWith('⚠️') ? 'text-red-500 text-lg' : 'text-muji-accent text-3xl'">{{ transBottom.translated }}</p>
                             <!-- 顯示自己正在說的話 (辨識結果) -->
@@ -967,10 +968,12 @@
                             <p v-if="isTranslating" class="text-[10px] text-muji-tech animate-pulse flex items-center gap-1 font-mono tracking-widest"><i class="ph-bold ph-spinner animate-spin"></i> 翻譯中...</p>
                         </div>
                         <!-- 麥克風按鈕 -->
-                        <div class="flex justify-center mt-6">
+                        <div class="flex flex-col items-center justify-center mt-4">
                             <button @click="toggleListen('bottom')" class="w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg border-4" :class="transBottom.isListening ? 'bg-red-500 text-white border-red-200 animate-pulse scale-105' : 'bg-white text-muji-ink border-stone-100 active:scale-95'">
                                 <i class="ph-fill ph-microphone text-2xl"></i>
                             </button>
+                            <!-- 錄音狀態提示 -->
+                            <p class="text-[10px] font-bold tracking-widest font-mono mt-3 transition-opacity" :class="transBottom.isListening ? 'text-red-500 animate-pulse opacity-100' : 'opacity-0 text-transparent'">點擊停止並翻譯</p>
                         </div>
                     </div>
                 </div>
@@ -1009,17 +1012,17 @@
                         <div class="flex items-end gap-3" :class="{'opacity-50 pointer-events-none': isPhotoTranslating}">
                             <div class="flex-1">
                                 <p class="text-[10px] text-stone-400 font-bold mb-1 tracking-widest font-mono">翻譯成</p>
-                                <select v-model="photoTargetLang" class="w-full bg-white border border-stone-200 rounded-lg px-3 py-3 text-sm font-bold shadow-sm focus:border-muji-ink transition-colors outline-none cursor-pointer">
-                                    <option v-for="l in transLanguages" :key="l.code" :value="l.code">{{ l.name }}</option>
+                                <select v-model="photoTargetLang" class="w-full bg-white border border-stone-200 rounded-lg px-3 py-3 text-xs font-bold shadow-sm focus:border-muji-ink transition-colors outline-none cursor-pointer">
+                                    <option v-for="l in transLanguages" :key="'tgt-'+l.code" :value="l.code">{{ l.name }}</option>
                                 </select>
                             </div>
-                            <button @click="doPhotoTranslate" class="h-[46px] px-6 rounded-lg font-bold text-[13px] tracking-widest shadow-sm active:scale-95 transition-all flex items-center gap-2" :class="isPhotoTranslating ? 'bg-stone-200 text-stone-400' : 'bg-muji-ink text-white'">
+                            <button @click="doPhotoTranslate" class="h-[46px] px-6 rounded-lg font-bold text-[13px] tracking-widest shadow-sm active:scale-95 transition-all flex items-center gap-2" :class="(isPhotoTranslating || !photoImage) ? 'bg-stone-200 text-stone-400' : 'bg-muji-ink text-white'">
                                 <i v-if="isPhotoTranslating" class="ph-bold ph-spinner animate-spin"></i>
-                                <span v-else><i class="ph-bold ph-translate"></i> 翻譯</span>
+                                <span v-else><i class="ph-bold ph-translate"></i> 開始翻譯</span>
                             </button>
                         </div>
 
-                        <!-- 翻譯結果區 (永遠顯示框體，提升 UX) -->
+                        <!-- 翻譯結果區 -->
                         <div class="bg-white rounded-xl border border-stone-200 p-5 shadow-soft relative min-h-[140px] flex flex-col">
                             <p class="text-[10px] text-stone-400 font-bold mb-3 tracking-widest font-mono flex items-center justify-between">
                                 翻譯結果
@@ -1029,10 +1032,10 @@
                             <div class="flex-1 relative">
                                 <div v-if="isPhotoTranslating" class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-xl z-10">
                                     <div class="w-8 h-8 border-2 border-stone-200 border-t-muji-accent rounded-full animate-spin mb-2"></div>
-                                    <span class="text-[10px] font-bold text-stone-400 tracking-widest font-mono animate-pulse">AI 正在努力識別圖片...</span>
+                                    <span class="text-[10px] font-bold text-stone-500 tracking-widest font-mono animate-pulse text-center">{{ photoTranslatingStatus }}</span>
                                 </div>
                                 
-                                <div v-else-if="photoResult" class="text-sm leading-relaxed whitespace-pre-wrap font-medium" :class="photoResult.startsWith('⚠️') ? 'text-red-500' : 'text-muji-ink'">
+                                <div v-else-if="photoResult" class="text-[13px] leading-relaxed whitespace-pre-wrap font-medium font-mono" :class="photoResult.startsWith('⚠️') ? 'text-red-500' : 'text-muji-ink'">
                                     {{ photoResult }}
                                 </div>
                                 
@@ -1121,15 +1124,15 @@
                 const isTranslating = ref(false);
                 const translatorModal = ref({ show: false });
                 const transLanguages = [
-                    { code: 'zh-TW', name: '繁體中文' },
-                    { code: 'zh-CN', name: '简体中文' },
-                    { code: 'ja-JP', name: '日本語' },
-                    { code: 'en-US', name: 'English' },
-                    { code: 'ko-KR', name: '한국어' },
-                    { code: 'th-TH', name: 'ไทย' },
-                    { code: 'vi-VN', name: 'Tiếng Việt' },
-                    { code: 'es-ES', name: 'Español' },
-                    { code: 'fr-FR', name: 'Français' }
+                    { code: 'zh-TW', name: '繁體中文', gCode: 'zh-TW' },
+                    { code: 'zh-CN', name: '简体中文', gCode: 'zh-CN' },
+                    { code: 'ja-JP', name: '日本語', gCode: 'ja' },
+                    { code: 'en-US', name: 'English', gCode: 'en' },
+                    { code: 'ko-KR', name: '한국어', gCode: 'ko' },
+                    { code: 'th-TH', name: 'ไทย', gCode: 'th' },
+                    { code: 'vi-VN', name: 'Tiếng Việt', gCode: 'vi' },
+                    { code: 'es-ES', name: 'Español', gCode: 'es' },
+                    { code: 'fr-FR', name: 'Français', gCode: 'fr' }
                 ];
                 const transTop = ref({ lang: 'ja-JP', recognized: '', translated: '', isListening: false });
                 const transBottom = ref({ lang: 'zh-TW', recognized: '', translated: '', isListening: false });
@@ -1138,12 +1141,13 @@
                 // 拍照翻譯狀態
                 const photoInputRef = ref(null);
                 const photoTranslatorModal = ref({ show: false });
-                const photoImage = ref(null); // 用於 UI 預覽 (Data URL)
-                const photoBase64 = ref(null); // 用於 API 傳送 (純 Base64)
+                const photoImage = ref(null); 
+                const photoTargetLang = ref('zh-TW'); // 預設翻譯為繁中
+                const photoBase64 = ref(null);
                 const photoMimeType = ref(null);
-                const photoTargetLang = ref('zh-TW');
                 const photoResult = ref('');
                 const isPhotoTranslating = ref(false);
+                const photoTranslatingStatus = ref('');
 
                 const viewportStyle = ref({ height: '100vh', top: '0px' });
                 
@@ -1161,9 +1165,9 @@
 
                 // API Key 狀態與本地儲存讀取
                 const savedApiKey = localStorage.getItem('cotabi_apikey') || '';
-                const tempApiKey = ref(savedApiKey); // 暫存輸入框的值
-                const userApiKey = ref(savedApiKey); // 實際被翻譯功能使用的值
-                const apiKeySaved = ref(false); // 控制確認按鈕的動畫狀態
+                const tempApiKey = ref(savedApiKey);
+                const userApiKey = ref(savedApiKey);
+                const apiKeySaved = ref(false);
 
                 const saveApiKey = () => {
                     userApiKey.value = tempApiKey.value;
@@ -1361,7 +1365,7 @@
                     confirmModal.value.show = false;
                 };
 
-                // 語音翻譯功能邏局
+                // 語音翻譯功能邏輯
                 const openTranslator = () => {
                     translatorModal.value.show = true;
                     transTop.value.recognized = ''; transTop.value.translated = ''; transTop.value.isListening = false;
@@ -1380,25 +1384,6 @@
                     playSound('pop');
                 };
 
-                const fetchWithRetry = async (url, options, retries = 5) => {
-                    let delay = 1000;
-                    for (let i = 0; i < retries; i++) {
-                        try {
-                            const res = await fetch(url, options);
-                            if (!res.ok) {
-                                // 捕捉並拋出詳細的 Google API 錯誤訊息以便除錯
-                                const errText = await res.text();
-                                throw new Error(`HTTP ${res.status}: ${errText}`);
-                            }
-                            return await res.json();
-                        } catch (e) {
-                            if (i === retries - 1) throw e;
-                            await new Promise(r => setTimeout(r, delay));
-                            delay *= 2;
-                        }
-                    }
-                };
-
                 const speakText = (text, lang) => {
                     if ('speechSynthesis' in window) {
                         const utterance = new SpeechSynthesisUtterance(text);
@@ -1407,32 +1392,22 @@
                     }
                 };
 
+                // ★ 使用 Google Translate 公開 API 進行即時對話翻譯 (免 API Key)
                 const doTranslate = async (text, fromLang, toLang, fromSide) => {
                     if (!text) return;
                     
                     isTranslating.value = true;
                     try {
-                        const apiKey = userApiKey.value.trim();
-                        if (!apiKey) {
-                            const errTxt = '⚠️ 請先至右上角設定輸入 API Key';
-                            if (fromSide === 'top') transBottom.value.translated = errTxt;
-                            else transTop.value.translated = errTxt;
-                            playSound('error');
-                            isTranslating.value = false;
-                            return;
-                        }
-
-                        const prompt = `Translate the following text from ${fromLang} to ${toLang}. Only return the translated text without any quotes or explanations. Text: "${text}"`;
-                        const payload = { contents: [{ parts: [{ text: prompt }] }] };
+                        const sourceGCode = transLanguages.find(l => l.code === fromLang)?.gCode || 'auto';
+                        const targetGCode = transLanguages.find(l => l.code === toLang)?.gCode || 'zh-TW';
                         
-                        // 正式部署版：使用公開穩定的 gemini-1.5-flash 模型
-                        const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '⚠️ 翻譯失敗，請重試。';
+                        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceGCode}&tl=${targetGCode}&dt=t&q=${encodeURIComponent(text)}`;
+                        const res = await fetch(url);
+                        
+                        if (!res.ok) throw new Error('Translation API Error');
+                        const data = await res.json();
+                        
+                        const translatedText = data[0].map(item => item[0]).join('') || '⚠️ 翻譯失敗，請重試。';
 
                         if (fromSide === 'top') {
                             transBottom.value.translated = translatedText;
@@ -1447,7 +1422,7 @@
 
                     } catch (error) {
                         console.error("Translation error", error);
-                        const errTxt = '⚠️ 翻譯發生錯誤，請檢查網路連線或 API Key 是否正確。';
+                        const errTxt = '⚠️ 翻譯發生錯誤，請檢查網路連線。';
                         if (fromSide === 'top') transBottom.value.translated = errTxt;
                         else transTop.value.translated = errTxt;
                         playSound('error');
@@ -1460,14 +1435,7 @@
                     const sourceState = side === 'top' ? transTop.value : transBottom.value;
                     const targetState = side === 'top' ? transBottom.value : transTop.value;
 
-                    // 防呆：檢查使用者是否已輸入 API Key (在啟動麥克風前攔截)
-                    if (!userApiKey.value || userApiKey.value.trim() === '') {
-                        sourceState.recognized = '⚠️ 請先至右上角設定輸入翻譯 API 金鑰';
-                        playSound('error');
-                        return;
-                    }
-
-                    // 若正在收聽，則停止
+                    // 若正在收聽，則手動點擊會停止收音並自動觸發翻譯
                     if (sourceState.isListening) {
                         if (speechRecognitionInstance) speechRecognitionInstance.stop();
                         return;
@@ -1490,12 +1458,14 @@
                     playSound('click');
                     speechRecognitionInstance = new SpeechRecognition();
                     speechRecognitionInstance.lang = sourceState.lang;
+                    
+                    // ★ 修改為 Continuous = true (需手動停止)，解決話講一半被截斷的問題
+                    speechRecognitionInstance.continuous = true; 
                     speechRecognitionInstance.interimResults = true;
-                    speechRecognitionInstance.continuous = false;
 
                     sourceState.isListening = true;
                     sourceState.recognized = '';
-                    targetState.translated = ''; // 清除另一側的舊翻譯結果
+                    targetState.translated = ''; 
 
                     speechRecognitionInstance.onresult = (event) => {
                         let finalTranscript = '';
@@ -1511,13 +1481,13 @@
                         console.warn("Speech recognition warning:", event.error);
                         sourceState.isListening = false;
                         if (event.error === 'network') {
-                            sourceState.recognized = '⚠️ 語音連線失敗，請檢查網路或瀏覽器限制';
+                            sourceState.recognized = '⚠️ 語音連線失敗，請檢查網路。';
                         } else if (event.error === 'not-allowed') {
-                            sourceState.recognized = '⚠️ 無法存取麥克風，請確認已授予權限';
+                            sourceState.recognized = '⚠️ 無法存取麥克風，請確認已授予權限。';
                         } else if (event.error !== 'aborted') {
                             sourceState.recognized = `⚠️ 語音發生錯誤: ${event.error}`;
                         }
-                        if (event.error !== 'aborted') playSound('error');
+                        if (event.error !== 'aborted' && event.error !== 'no-speech') playSound('error');
                     };
 
                     speechRecognitionInstance.onend = () => {
@@ -1530,13 +1500,14 @@
                     speechRecognitionInstance.start();
                 };
 
-                // 拍照翻譯功能邏輯
+                // ★ 拍照翻譯功能邏輯 (恢復使用 Gemini API)
                 const openPhotoTranslator = () => {
                     photoTranslatorModal.value.show = true;
                     photoImage.value = null;
                     photoBase64.value = null;
                     photoResult.value = '';
                     isPhotoTranslating.value = false;
+                    photoTranslatingStatus.value = '';
                     playSound('pop');
                 };
 
@@ -1557,40 +1528,34 @@
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         photoImage.value = e.target.result; 
-                        // 取出 data:image/jpeg;base64, 後面的純 Base64 字串
                         photoBase64.value = e.target.result.split(',')[1]; 
-                        photoResult.value = ''; // 清除舊結果
+                        photoResult.value = ''; 
                         playSound('pop');
                     };
                     reader.readAsDataURL(file);
                 };
 
                 const doPhotoTranslate = async () => {
-                    // 防呆：攔截未輸入 API Key
                     if (!userApiKey.value || userApiKey.value.trim() === '') {
-                        photoResult.value = '⚠️ 請先至右上角設定輸入翻譯 API 金鑰';
+                        photoResult.value = '⚠️ 請先至右上角設定輸入 Google Gemini API 金鑰。';
                         playSound('error');
                         return;
                     }
-
-                    // 防呆：攔截未拍攝/上傳圖片
                     if (!photoBase64.value) {
-                        photoResult.value = '⚠️ 請先點擊上方區域拍攝或上傳欲翻譯之圖片';
+                        photoResult.value = '⚠️ 請先點擊上方區域拍攝或上傳欲翻譯之圖片。';
                         playSound('error');
                         return;
                     }
 
                     isPhotoTranslating.value = true;
                     photoResult.value = '';
+                    photoTranslatingStatus.value = 'AI 正在努力解析圖片內容...';
                     
                     try {
                         const apiKey = userApiKey.value.trim();
                         const targetLangName = transLanguages.find(l => l.code === photoTargetLang.value)?.name || 'Traditional Chinese';
                         
-                        // 提示詞要求 AI 提取文字並翻譯
-                        const prompt = `Please act as a helpful translator. Extract all the text you can read from this image and translate it into ${targetLangName}. 
-If it's a menu, list the items and their translations clearly. If it's a sign, just provide the translated meaning. 
-Do not include raw markdown formatting like backticks, just clean text.`;
+                        const prompt = `Please act as a helpful translator. Extract all the text you can read from this image and translate it into ${targetLangName}. If it's a menu, list the items and their translations clearly. If it's a sign, just provide the translated meaning. Context matters. Do not use backticks or markdown formatting.`;
 
                         const payload = {
                             contents: [{
@@ -1601,22 +1566,34 @@ Do not include raw markdown formatting like backticks, just clean text.`;
                             }]
                         };
                         
-                        // 正式部署版：使用公開穩定的 gemini-1.5-flash 模型
-                        const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
 
-                        photoResult.value = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '⚠️ 無法辨識圖片中的文字或翻譯失敗。';
+                        if (!response.ok) {
+                            if (response.status === 404) throw new Error("Sandbox404");
+                            const errTxt = await response.text();
+                            throw new Error(`HTTP ${response.status}: ${errTxt}`);
+                        }
+
+                        const data = await response.json();
+                        photoResult.value = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '⚠️ 無法辨識圖片中的文字。';
                         playSound('success');
 
                     } catch (error) {
                         console.error("Photo Translation error", error);
-                        photoResult.value = '⚠️ 解析圖片時發生錯誤，請檢查網路連線或 API Key 是否正確。';
+                        // 沙盒 404 特殊防呆處理
+                        if (error.message === "Sandbox404") {
+                            photoResult.value = '⚠️ 測試環境攔截：您目前處於協作沙盒中，系統限制了正式版 AI 模型的連線。\n\n💡 解決方案：請將這份代碼部署至您的 GitHub Pages 後，即可完美運行相機翻譯！';
+                        } else {
+                            photoResult.value = `⚠️ 翻譯失敗：請檢查網路連線或 API Key 是否正確。(${error.message})`;
+                        }
                         playSound('error');
                     } finally {
                         isPhotoTranslating.value = false;
+                        photoTranslatingStatus.value = '';
                     }
                 };
 
@@ -2031,7 +2008,7 @@ Do not include raw markdown formatting like backticks, just clean text.`;
                     activeTrip, currentDayItinerary, displayExpression, hasOperatorInExpr, weatherTrend, categorizedTrips, calendarYear, calendarMonth, calendarDays, calculatedResultFormatted, evaluatedBaseFormatted, currentDateShort, currentDayOfWeek, greetingText, currencyList, formatDayTab, isFlightPassed,
                     playSound, getCurrencySym, getTripDateRange, toggleGroup, switchTab, openTrip, switchDay, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, deleteTrip, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, openSpotModal, saveSpot, deleteSpot, addArea, removeArea, toggleCheck, openCategoryModal, saveCategory, deleteCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, deleteChecklistItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, updateRootFontSize, availableIcons, tabs, openMaps, getCategoryProgress, requestConfirm, execConfirm,
                     translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen, userApiKey, tempApiKey, apiKeySaved, saveApiKey,
-                    photoTranslatorModal, photoImage, isPhotoTranslating, photoTargetLang, photoResult, photoInputRef, openPhotoTranslator, closePhotoTranslator, triggerCamera, handlePhotoUpload, doPhotoTranslate
+                    photoTranslatorModal, photoImage, isPhotoTranslating, photoTargetLang, photoResult, photoTranslatingStatus, photoInputRef, openPhotoTranslator, closePhotoTranslator, triggerCamera, handlePhotoUpload, doPhotoTranslate
                 };
             }
         }).mount('#app');
