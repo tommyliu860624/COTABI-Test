@@ -452,6 +452,21 @@
                             </div>
                         </div>
 
+                        <!-- 模組二：購物尺寸對照 -->
+                        <div class="bg-white rounded-xl p-5 shadow-soft border border-stone-200">
+                            <h3 class="text-sm font-bold text-muji-ink tracking-widest mb-4 flex items-center gap-2"><i class="ph-bold ph-shopping-bag text-muji-tech"></i> 購物幫手</h3>
+                            <button @click="openSizeModal" class="w-full bg-stone-50 rounded-xl p-4 border border-stone-100 flex items-center justify-between hover:bg-stone-100 transition-colors active:scale-95">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-muji-ink shadow-sm"><i class="ph-bold ph-ruler text-xl"></i></div>
+                                    <div class="text-left">
+                                        <span class="block text-xs font-bold text-muji-ink tracking-widest">尺寸對照表</span>
+                                        <span class="block text-[10px] text-stone-400 mt-0.5 font-mono">鞋子 / 服飾多國尺碼</span>
+                                    </div>
+                                </div>
+                                <i class="ph-bold ph-caret-right text-stone-300"></i>
+                            </button>
+                        </div>
+
                         <!-- 模組站位：旅費管家 -->
                         <div class="bg-white/60 rounded-xl p-5 shadow-inner-soft border border-stone-200 border-dashed opacity-70">
                             <h3 class="text-sm font-bold text-stone-400 tracking-widest mb-4 flex items-center gap-2"><i class="ph-bold ph-wallet"></i> 旅費與分帳 (開發中)</h3>
@@ -853,16 +868,22 @@
                                 <button v-for="lv in [1, 2, 3]" :key="lv" @click="fontSizeLevel = lv; updateRootFontSize()" class="flex-1 py-2.5 rounded-lg border text-sm font-bold transition-all active:scale-95" :class="fontSizeLevel === lv ? 'bg-muji-ink text-white border-muji-ink shadow-md' : 'bg-stone-50 text-stone-400 border-stone-100'">A<span v-if="lv > 1">{{ lv === 2 ? '+' : '++' }}</span></button>
                             </div>
                         </div>
-                        
-                        <!-- 恢復 API Key 設定區塊 -->
+
+                        <!-- 恢復 API Key 設定區塊 (乾淨、無寫死金鑰) -->
                         <div class="bg-white rounded-xl p-5 border border-stone-200 shadow-soft">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-bold text-muji-ink tracking-widest font-mono">翻譯 API 金鑰</span>
+                                <span class="text-sm font-bold text-muji-ink tracking-widest font-mono">API 金鑰</span>
                                 <i class="ph-fill ph-translate text-muji-tech text-lg"></i>
                             </div>
-                            <p class="text-[10px] text-stone-400 mb-4 font-bold leading-relaxed">請輸入您的 Google Gemini API Key 以啟用智能相機翻譯。此金鑰僅會安全地儲存於您目前的裝置瀏覽器中。</p>
+                            <p class="text-[10px] text-stone-400 mb-4 font-bold leading-relaxed">請輸入您的 Google Gemini API Key 以啟用 AI 智慧功能。此金鑰僅會安全地儲存於您目前的裝置瀏覽器中。</p>
                             <div class="flex gap-2">
-                                <input type="password" v-model="tempApiKey" placeholder="AIzaSy..." class="flex-1 min-w-0 bg-stone-50 border border-stone-200 rounded px-3 py-2.5 text-xs font-mono shadow-inner-soft focus:border-muji-ink transition-colors outline-none text-stone-600">
+                                <div class="relative flex-1 min-w-0">
+                                    <input :type="showApiKey ? 'text' : 'password'" v-model="tempApiKey" placeholder="AIzaSy..." class="w-full bg-stone-50 border border-stone-200 rounded px-3 py-2.5 pr-16 text-xs font-mono shadow-inner-soft focus:border-muji-ink transition-colors outline-none text-stone-600">
+                                    <div class="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
+                                        <button v-if="tempApiKey" @click="tempApiKey = ''" class="w-6 h-6 rounded flex items-center justify-center text-stone-400 hover:text-stone-600 active:scale-90 transition-colors"><i class="ph-bold ph-x text-xs"></i></button>
+                                        <button @click="showApiKey = !showApiKey" class="w-6 h-6 rounded flex items-center justify-center text-stone-400 hover:text-stone-600 active:scale-90 transition-colors"><i class="ph-bold text-sm" :class="showApiKey ? 'ph-eye-slash' : 'ph-eye'"></i></button>
+                                    </div>
+                                </div>
                                 <button @click="saveApiKey" class="shrink-0 px-4 rounded text-white font-bold text-[11px] tracking-widest active:scale-95 transition-all flex items-center justify-center min-w-[64px]" :class="apiKeySaved ? 'bg-green-500' : 'bg-muji-ink'">
                                     <span v-if="apiKeySaved"><i class="ph-bold ph-check text-sm"></i></span>
                                     <span v-else>確認</span>
@@ -1049,6 +1070,81 @@
             </div>
         </transition>
 
+        <!-- 尺寸對照表 Modal -->
+        <transition name="modal">
+            <div v-if="sizeModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8500]" :style="viewportStyle" @click.self="sizeModal.show = false">
+                <div class="modal-panel bg-muji-bg w-full max-w-md h-[85vh] rounded-t-xl p-6 flex flex-col relative font-sans border-t border-white/20 shadow-2xl">
+                    <div class="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-6 shrink-0 opacity-40"></div>
+                    <div class="flex justify-between items-center mb-6 px-1 shrink-0">
+                        <h2 class="text-lg font-bold tracking-widest text-muji-ink flex items-center gap-2"><i class="ph-bold ph-ruler text-muji-tech"></i> 尺寸對照表</h2>
+                        <button @click="sizeModal.show = false" class="w-8 h-8 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center active:scale-90 text-stone-400 shadow-sm hover:text-muji-ink transition-colors"><i class="ph-bold ph-x text-sm"></i></button>
+                    </div>
+
+                    <!-- 分類切換 Tabs (橫向滑動 + 支援滑鼠滾輪) -->
+                    <div @wheel="handleHorizontalScroll" class="flex gap-1.5 p-1.5 bg-stone-100/80 border border-stone-200 rounded-lg mb-5 shrink-0 shadow-inner-soft overflow-x-auto hide-scrollbar">
+                        <button v-for="(tabData, key) in sizeData" :key="key" @click="activeSizeTab = key; activeSizeRow = null; searchValue = ''; playSound('click')" class="flex-1 min-w-[70px] py-2 text-[11px] font-bold tracking-widest rounded-md transition-all whitespace-nowrap px-2 shadow-sm" :class="activeSizeTab === key ? 'bg-white text-muji-ink border border-stone-200' : 'text-stone-400 hover:text-stone-600 border border-transparent shadow-none'">{{ tabData.title }}</button>
+                    </div>
+
+                    <!-- 智慧快速換算區塊 (全新互動設計) -->
+                    <div class="mb-5 bg-white rounded-xl p-4 border border-stone-200 shadow-soft shrink-0 relative overflow-hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="text-[11px] text-muji-ink font-bold tracking-widest font-mono flex items-center gap-1.5"><i class="ph-fill ph-magic-wand text-muji-accent"></i> 快速換算</p>
+                            <!-- 已知標準選擇 -->
+                            <div class="flex bg-stone-50 rounded-lg border border-stone-200 p-0.5 shadow-inner-soft">
+                                <button v-for="(header, idx) in sizeData[activeSizeTab].headers" :key="idx" @click="searchStandardIdx = idx; searchValue = ''; activeSizeRow = null" class="px-2.5 py-1 text-[9px] font-bold rounded transition-colors" :class="searchStandardIdx === idx ? 'bg-muji-ink text-white shadow-sm' : 'text-stone-400 hover:text-stone-500'">{{ header.split('(')[0] }}</button>
+                            </div>
+                        </div>
+
+                        <!-- 尺寸選擇膠囊列 (支援滑鼠滾輪) -->
+                        <div @wheel="handleHorizontalScroll" class="flex gap-2 overflow-x-auto hide-scrollbar pb-2 -mx-2 px-2">
+                            <button v-for="val in availableSearchValues" :key="val" @click="findSizeRowFromValue(val)" class="shrink-0 min-w-[48px] px-3 py-2 rounded-lg font-mono font-bold text-xs transition-all border" :class="searchValue === String(val) ? 'bg-muji-accent text-white border-muji-accent shadow-md transform scale-105' : 'bg-stone-50 text-stone-500 border-stone-200 hover:border-stone-300'">{{ val }}</button>
+                        </div>
+
+                        <!-- 換算結果呈現卡片 -->
+                        <div v-if="activeSizeRow !== null" class="mt-3 pt-4 border-t border-stone-100 flex gap-2.5 text-center animate-[fadeIn_0.3s] overflow-x-auto hide-scrollbar">
+                            <template v-for="(header, idx) in sizeData[activeSizeTab].headers" :key="idx">
+                                <div v-if="idx !== searchStandardIdx" class="flex-1 min-w-[70px] bg-stone-50 rounded-lg p-2.5 border border-stone-100 shadow-sm relative overflow-hidden shrink-0">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent"></div>
+                                    <p class="text-[9px] text-stone-400 font-bold mb-1 tracking-wider relative z-10">{{ header.split('(')[0] }}</p>
+                                    <p class="text-[17px] font-bold text-muji-ink font-mono relative z-10">{{ sizeData[activeSizeTab].rows[activeSizeRow][idx] }}</p>
+                                </div>
+                            </template>
+                        </div>
+                        <div v-else class="mt-3 pt-4 border-t border-stone-100 text-center">
+                             <p class="text-[10px] text-stone-300 font-bold tracking-widest font-mono">請滑動上方按鈕選擇您的尺寸</p>
+                        </div>
+                    </div>
+
+                    <!-- 完整對照表區塊 (移除寫死寬度，讓多欄位自適應) -->
+                    <div class="flex-1 overflow-y-auto hide-scrollbar bg-white rounded-xl border border-stone-200 shadow-soft relative flex flex-col">
+                        <table class="w-full text-left border-collapse table-fixed relative">
+                            <thead class="sticky top-0 bg-stone-100/95 backdrop-blur z-10 shadow-sm border-b border-stone-200">
+                                <tr>
+                                    <th v-for="header in sizeData[activeSizeTab].headers" :key="header" class="py-3 px-1 text-[8.5px] font-bold text-stone-500 tracking-widest text-center font-mono">{{ header }}</th>
+                                </tr>
+                            </thead>
+                            <tbody ref="sizeTableBodyRef">
+                                <tr v-for="(row, idx) in sizeData[activeSizeTab].rows" :key="idx" @click="updateSearchFromRow(idx); playSound('click')" class="border-b border-stone-50 last:border-b-0 cursor-pointer transition-all duration-300 relative group" :class="activeSizeRow === idx ? 'bg-muji-accent/5' : 'hover:bg-stone-50'">
+                                    
+                                    <td v-for="(cell, cIdx) in row" :key="cIdx" class="py-3.5 px-0.5 text-[11px] font-bold text-center font-mono transition-all duration-300 relative" :class="activeSizeRow === idx ? (cIdx === searchStandardIdx ? 'text-white' : 'text-muji-accent') : 'text-muji-ink'">
+                                        <!-- 高亮指示條 -->
+                                        <div v-if="cIdx === 0 && activeSizeRow === idx" class="absolute left-0 top-0 bottom-0 w-1 bg-muji-accent rounded-r"></div>
+                                        
+                                        <!-- 選取標籤 -->
+                                        <span :class="activeSizeRow === idx && cIdx === searchStandardIdx ? 'bg-muji-accent px-1.5 py-1 rounded-md shadow-sm' : ''">{{ cell }}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="shrink-0 pt-4 text-center pb-2">
+                         <p class="text-[9px] text-stone-400 tracking-widest font-mono">點擊列表或上方按鈕皆可連動。各品牌可能略有差異，僅供參考。</p>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
         <!-- Bottom Navigation -->
         <nav id="nav-bar" class="glass-panel fixed bottom-0 w-full max-w-[480px] z-50 pt-1" style="padding-bottom: max(16px, env(safe-area-inset-bottom));">
             <div class="flex justify-around items-center h-[65px] px-2 outline-none">
@@ -1143,12 +1239,231 @@
                 const photoInputRef = ref(null);
                 const photoTranslatorModal = ref({ show: false });
                 const photoImage = ref(null); 
-                const photoTargetLang = ref('zh-TW'); // 預設翻譯為繁中
+                const photoTargetLang = ref('zh-TW');
                 const photoBase64 = ref(null);
                 const photoMimeType = ref(null);
                 const photoResult = ref('');
                 const isPhotoTranslating = ref(false);
                 const photoTranslatingStatus = ref('');
+
+                // 購物尺寸對照表狀態與資料
+                const sizeModal = ref({ show: false });
+                const activeSizeTab = ref('men_shoes');
+                const activeSizeRow = ref(null);
+                
+                // 搜尋尺寸相關狀態
+                const searchStandardIdx = ref(0);
+                const searchValue = ref('');
+                const sizeTableBodyRef = ref(null);
+                
+                // 擴充：加入中國尺碼，以及童裝、戒指等高頻購物對照分類 (包含極小與極大尺碼)
+                const sizeData = {
+                    men_shoes: {
+                        title: '男鞋',
+                        headers: ['台/日(cm)', '美國(US)', '英國(UK)', '歐洲(EU)', '中國(CN)'],
+                        rows: [
+                            ['24', '6', '5.5', '38.5', '38'],
+                            ['24.5', '6.5', '6', '39', '39'],
+                            ['25', '7', '6.5', '40', '40'],
+                            ['25.5', '7.5', '7', '40.5', '41'],
+                            ['26', '8', '7.5', '41', '42'],
+                            ['26.5', '8.5', '8', '42', '42.5'],
+                            ['27', '9', '8.5', '42.5', '43'],
+                            ['27.5', '9.5', '9', '43', '44'],
+                            ['28', '10', '9.5', '44', '44.5'],
+                            ['28.5', '10.5', '10', '44.5', '45'],
+                            ['29', '11', '10.5', '45', '46'],
+                            ['30', '12', '11.5', '46', '47'],
+                            ['30.5', '12.5', '12', '47', '48'],
+                            ['31', '13', '12.5', '47.5', '49'],
+                            ['32', '14', '13.5', '48.5', '50']
+                        ]
+                    },
+                    women_shoes: {
+                        title: '女鞋',
+                        headers: ['台/日(cm)', '美國(US)', '英國(UK)', '歐洲(EU)', '中國(CN)'],
+                        rows: [
+                            ['21.5', '4.5', '2.5', '34', '33'],
+                            ['22', '5', '3', '35', '34'],
+                            ['22.5', '5.5', '3.5', '36', '35'],
+                            ['23', '6', '4', '36.5', '36'],
+                            ['23.5', '6.5', '4.5', '37', '37'],
+                            ['24', '7', '5', '38', '38'],
+                            ['24.5', '7.5', '5.5', '38.5', '39'],
+                            ['25', '8', '6', '39', '40'],
+                            ['25.5', '8.5', '6.5', '40', '41'],
+                            ['26', '9', '7', '40.5', '42'],
+                            ['26.5', '9.5', '7.5', '41', '43'],
+                            ['27', '10', '8', '42', '44']
+                        ]
+                    },
+                    men_tops: {
+                        title: '男上衣',
+                        headers: ['國際(Int)', '日本(JP)', '美國(US)', '歐洲(EU)', '中國(CN)'],
+                        rows: [
+                            ['XXS', 'XS', '32', '42', '155/76A'],
+                            ['XS', 'S', '34', '44', '160/80A'],
+                            ['S', 'M', '36', '46', '165/84A'],
+                            ['M', 'L', '38', '48', '170/88A'],
+                            ['L', 'LL/XL', '40', '50', '175/92A'],
+                            ['XL', '3L', '42', '52', '180/96A'],
+                            ['XXL', '4L', '44', '54', '185/100A'],
+                            ['3XL', '5L', '46', '56', '190/104A'],
+                            ['4XL', '6L', '48', '58', '195/108A']
+                        ]
+                    },
+                    women_tops: {
+                        title: '女上衣',
+                        headers: ['國際(Int)', '日本(JP)', '美國(US)', '歐洲(EU)', '中國(CN)'],
+                        rows: [
+                            ['XXXS', '3(XXXS)', '00', '30', '145/72A'],
+                            ['XXS', '5(XS)', '0', '32', '150/76A'],
+                            ['XS', '7(S)', '2', '34', '155/80A'],
+                            ['S', '9(M)', '4', '36', '160/84A'],
+                            ['M', '11(L)', '6', '38', '165/88A'],
+                            ['L', '13(LL)', '8', '40', '170/92A'],
+                            ['XL', '15(3L)', '10', '42', '175/96A'],
+                            ['XXL', '17(4L)', '12', '44', '180/100A'],
+                            ['3XL', '19(5L)', '14', '46', '185/104A']
+                        ]
+                    },
+                    men_pants: {
+                        title: '男褲子',
+                        headers: ['腰圍(吋)', '國際(Int)', '歐洲(EU)', '中國(CN)'],
+                        rows: [
+                            ['26', 'XXS', '42', '155/66A'],
+                            ['28', 'XS', '44', '160/70A'],
+                            ['30', 'S', '46', '165/76A'],
+                            ['32', 'M', '48', '170/82A'],
+                            ['34', 'L', '50', '175/88A'],
+                            ['36', 'XL', '52', '180/94A'],
+                            ['38', 'XXL', '54', '185/100A'],
+                            ['40', '3XL', '56', '190/106A'],
+                            ['42', '4XL', '58', '195/112A']
+                        ]
+                    },
+                    women_pants: {
+                        title: '女褲子',
+                        headers: ['腰圍(吋)', '日本(JP)', '美國(US)', '歐洲(EU)', '中國(CN)'],
+                        rows: [
+                            ['22', '53(XXXS)', '00', '30', '145/52A'],
+                            ['23', '55(XXS)', '00', '30', '150/56A'],
+                            ['24', '57(XS)', '0', '32', '150/60A'],
+                            ['25', '61(S)', '2', '34', '155/64A'],
+                            ['26-27', '64(M)', '4', '36', '160/68A'],
+                            ['28-29', '67(L)', '6', '38', '165/72A'],
+                            ['30', '70(XL)', '8', '40', '170/76A'],
+                            ['31-32', '73(XXL)', '10', '42', '175/80A'],
+                            ['34', '76(3XL)', '12', '44', '180/84A'],
+                            ['36', '80(4XL)', '14', '46', '185/88A']
+                        ]
+                    },
+                    kids: {
+                        title: '童裝',
+                        headers: ['身高(cm)', '年齡', '美國(US)', '歐洲(EU)', '中國(CN)'],
+                        rows: [
+                            ['60', '3-6個月', '3-6M', '62', '60/40'],
+                            ['70', '6-12個月', '6-12M', '74', '70/44'],
+                            ['80', '1歲', '12-18M', '80', '80/48'],
+                            ['90', '2歲', '2T', '92', '90/52'],
+                            ['100', '3-4歲', '4T', '104', '100/56'],
+                            ['110', '5歲', '5T', '110', '110/60'],
+                            ['120', '6-7歲', '6-7', '122', '120/64'],
+                            ['130', '8歲', '8', '128', '130/68'],
+                            ['140', '9-10歲', '10', '140', '140/72'],
+                            ['150', '11-12歲', '12', '152', '150/76'],
+                            ['160', '13-14歲', '14', '164', '160/80']
+                        ]
+                    },
+                    rings: {
+                        title: '戒指',
+                        headers: ['內徑(mm)', '國際(台)', '日本(JP)', '美國(US)', '中國(CN)'],
+                        rows: [
+                            ['13.0', '4', '2', '2', '4'],
+                            ['13.5', '5', '3', '2.5', '5'],
+                            ['14.1', '6', '4', '3', '7'],
+                            ['14.5', '7', '5', '3.5', '8'],
+                            ['15.0', '9', '7', '4.25', '9'],
+                            ['15.3', '10', '9', '4.75', '10'],
+                            ['16.1', '11', '11', '5.5', '11'],
+                            ['16.5', '12', '12', '6', '12'],
+                            ['17.0', '13', '14', '6.5', '14'],
+                            ['17.3', '14', '15', '7', '15'],
+                            ['17.7', '15', '16', '7.5', '16'],
+                            ['18.1', '16', '17', '8', '18'],
+                            ['18.5', '17', '18', '8.5', '19'],
+                            ['19.0', '18', '19', '9', '20'],
+                            ['20.0', '20', '22', '10', '23']
+                        ]
+                    }
+                };
+
+                // 計算當前分類與標準下，所有可選的尺寸數值
+                const availableSearchValues = computed(() => {
+                    const tabData = sizeData[activeSizeTab.value];
+                    if (!tabData || tabData.rows.length === 0) return [];
+                    return Array.from(new Set(tabData.rows.map(row => row[searchStandardIdx.value]))).filter(Boolean);
+                });
+
+                // 當切換分類時重置搜尋狀態
+                watch(activeSizeTab, () => {
+                    searchStandardIdx.value = 0;
+                    searchValue.value = '';
+                    activeSizeRow.value = null;
+                });
+
+                // 當切換基準時重置尺寸選擇
+                watch(searchStandardIdx, () => {
+                    searchValue.value = '';
+                    activeSizeRow.value = null;
+                });
+
+                // (新增) 全新互動：點擊上方膠囊按鈕時的處理
+                const findSizeRowFromValue = (val) => {
+                    searchValue.value = String(val);
+                    const tabData = sizeData[activeSizeTab.value];
+                    const idx = tabData.rows.findIndex(row => String(row[searchStandardIdx.value]) === String(val));
+                    
+                    if (idx !== -1) {
+                        activeSizeRow.value = idx;
+                        playSound('success');
+                        
+                        // 將該列捲動到可視範圍中間
+                        nextTick(() => {
+                            const rows = sizeTableBodyRef.value?.querySelectorAll('tr');
+                            if (rows && rows[idx]) {
+                                rows[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        });
+                    } else {
+                        activeSizeRow.value = null;
+                    }
+                };
+
+                // (新增) 點擊下方表格反向連動上方 UI
+                const updateSearchFromRow = (idx) => {
+                    activeSizeRow.value = idx;
+                    const val = sizeData[activeSizeTab.value].rows[idx][searchStandardIdx.value];
+                    searchValue.value = String(val);
+                };
+
+                // (新增) 處理電腦端滑鼠滾輪水平滑動 UX
+                const handleHorizontalScroll = (e) => {
+                    const container = e.currentTarget;
+                    // 如果原本就是在進行橫向滾動 (例如觸控板的左右滑動)，就不干涉
+                    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+                    
+                    // 將垂直滾動轉換為水平滾動
+                    container.scrollLeft += e.deltaY;
+                    e.preventDefault(); // 阻止原本的垂直頁面滾動
+                };
+
+                const openSizeModal = () => { 
+                    sizeModal.value.show = true; 
+                    activeSizeRow.value = null; 
+                    searchValue.value = '';
+                    playSound('pop'); 
+                };
 
                 const viewportStyle = ref({ height: '100vh', top: '0px' });
                 
@@ -1166,9 +1481,11 @@
 
                 // API Key 狀態與本地儲存讀取
                 const savedApiKey = localStorage.getItem('cotabi_apikey') || '';
+                
                 const tempApiKey = ref(savedApiKey);
                 const userApiKey = ref(savedApiKey);
                 const apiKeySaved = ref(false);
+                const showApiKey = ref(false); // 控制密碼顯示狀態
 
                 const saveApiKey = () => {
                     userApiKey.value = tempApiKey.value;
@@ -1501,7 +1818,7 @@
                     speechRecognitionInstance.start();
                 };
 
-                // ★ 拍照翻譯功能邏輯 (恢復使用 Gemini API 且混淆 Key)
+                // ★ 拍照翻譯功能邏輯
                 const openPhotoTranslator = () => {
                     photoTranslatorModal.value.show = true;
                     photoImage.value = null;
@@ -1536,8 +1853,28 @@
                     reader.readAsDataURL(file);
                 };
 
+                // 自動重試機制的 Fetch (處理 503, 429 等暫時性錯誤)
+                const fetchWithRetry = async (url, options, maxRetries = 5) => {
+                    let delay = 1000;
+                    for (let i = 0; i < maxRetries; i++) {
+                        try {
+                            const res = await fetch(url, options);
+                            if (!res.ok && (res.status >= 500 || res.status === 429)) {
+                                if (i === maxRetries - 1) return res;
+                                await new Promise(r => setTimeout(r, delay));
+                                delay *= 2;
+                                continue;
+                            }
+                            return res;
+                        } catch (err) {
+                            if (i === maxRetries - 1) throw err;
+                            await new Promise(r => setTimeout(r, delay));
+                            delay *= 2;
+                        }
+                    }
+                };
+
                 const doPhotoTranslate = async () => {
-                    // 防呆檢查
                     if (!userApiKey.value || userApiKey.value.trim() === '') {
                         photoResult.value = '⚠️ 請先至右上角設定輸入 Google Gemini API 金鑰。';
                         playSound('error');
@@ -1551,7 +1888,7 @@
 
                     isPhotoTranslating.value = true;
                     photoResult.value = '';
-                    photoTranslatingStatus.value = 'AI 正在尋找最佳模型並解析圖片...';
+                    photoTranslatingStatus.value = 'AI 正在努力解析圖片內容...';
                     
                     try {
                         const apiKey = userApiKey.value.trim();
@@ -1568,8 +1905,8 @@
                             }]
                         };
                         
-                        // ★ 根據您的英明判斷，切換為額度更高 (500 RPD / 15 RPM) 且更適合旅行高頻使用的 gemini-3.1-flash-lite
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`, {
+                        // 統一鎖定使用高額度、速度快的 gemini-3.1-flash-lite-preview 模型
+                        const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -1586,7 +1923,7 @@
 
                     } catch (error) {
                         console.error("Photo Translation error", error);
-                        photoResult.value = `⚠️ 翻譯失敗：請檢查網路連線或 API Key 狀態。(${error.message})`;
+                        photoResult.value = `⚠️ 翻譯失敗：請檢查網路連線或 API Key 是否正確。(${error.message})`;
                         playSound('error');
                     } finally {
                         isPhotoTranslating.value = false;
@@ -1995,7 +2332,7 @@
                     localStorage.setItem('cotabi_trips_v46', JSON.stringify(trips.value));
                 }, { deep: true });
 
-                // 監聽 API Key 變更並存入本地儲存
+                // 監聽設定變更並存入本地儲存
                 watch(userApiKey, (newVal) => {
                     localStorage.setItem('cotabi_apikey', newVal);
                 });
@@ -2004,8 +2341,9 @@
                     showSplash, splashStep, mainScrollArea, textInputRef, activeTab, activeTripId, activeDay, showSettings, copiedId, textModal, tripModal, categoryModal, flightModal, checklistResetModal, checklistItemModal, spotModal, memberModal, confirmModal, iconModal, viewportStyle, fontSizeLevel, weatherTrendType, collapsedGroups, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers,
                     activeTrip, currentDayItinerary, displayExpression, hasOperatorInExpr, weatherTrend, categorizedTrips, calendarYear, calendarMonth, calendarDays, calculatedResultFormatted, evaluatedBaseFormatted, currentDateShort, currentDayOfWeek, greetingText, currencyList, formatDayTab, isFlightPassed,
                     playSound, getCurrencySym, getTripDateRange, toggleGroup, switchTab, openTrip, switchDay, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, deleteTrip, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, openSpotModal, saveSpot, deleteSpot, addArea, removeArea, toggleCheck, openCategoryModal, saveCategory, deleteCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, deleteChecklistItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, updateRootFontSize, availableIcons, tabs, openMaps, getCategoryProgress, requestConfirm, execConfirm,
-                    translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen, userApiKey, tempApiKey, apiKeySaved, saveApiKey,
-                    photoTranslatorModal, photoImage, isPhotoTranslating, photoTargetLang, photoResult, photoTranslatingStatus, photoInputRef, openPhotoTranslator, closePhotoTranslator, triggerCamera, handlePhotoUpload, doPhotoTranslate
+                    translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen, userApiKey, tempApiKey, apiKeySaved, saveApiKey, showApiKey,
+                    photoTranslatorModal, photoImage, isPhotoTranslating, photoTargetLang, photoResult, photoTranslatingStatus, photoInputRef, openPhotoTranslator, closePhotoTranslator, triggerCamera, handlePhotoUpload, doPhotoTranslate,
+                    sizeModal, activeSizeTab, activeSizeRow, sizeData, openSizeModal, searchStandardIdx, searchValue, availableSearchValues, sizeTableBodyRef, findSizeRowFromValue, updateSearchFromRow, handleHorizontalScroll
                 };
             }
         }).mount('#app');
