@@ -991,13 +991,6 @@
                             <p class="text-[9px] text-stone-400 mt-3 font-bold leading-relaxed">行程記帳的總計與每日小計，將會自動轉換為此幣別顯示。</p>
                         </div>
 
-                        <div class="bg-white rounded-xl p-5 border border-stone-200 shadow-soft">
-                            <span class="text-sm font-bold text-muji-ink tracking-widest block mb-4 font-mono">字體大小設定</span>
-                            <div class="flex gap-2">
-                                <button v-for="lv in [1, 2, 3]" :key="lv" @click="fontSizeLevel = lv; updateRootFontSize(); playSound('click')" class="flex-1 py-2.5 rounded-lg border text-sm font-bold transition-all active:scale-95" :class="fontSizeLevel === lv ? 'bg-muji-ink text-white border-muji-ink shadow-md' : 'bg-stone-50 text-stone-400 border-stone-100'">A<span v-if="lv > 1">{{ lv === 2 ? '+' : '++' }}</span></button>
-                            </div>
-                        </div>
-
                         <!-- 恢復 API Key 設定區塊 (乾淨、無寫死金鑰) -->
                         <div class="bg-white rounded-xl p-5 border border-stone-200 shadow-soft">
                             <div class="flex items-center justify-between mb-2">
@@ -1064,11 +1057,23 @@
                     <div class="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-5 shrink-0 opacity-40"></div>
                     <div class="flex justify-between items-center mb-5 px-1 shrink-0">
                         <h2 class="text-base font-bold tracking-widest text-muji-ink flex items-center gap-2 font-mono"><i class="ph-bold ph-receipt text-muji-tech"></i> {{ expenseModal.mode === 'add' ? '新增記帳' : '編輯記帳' }}</h2>
-                        <button @click="expenseModal.show = false; playSound('pop')" class="w-8 h-8 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center active:scale-90 text-stone-400 shadow-sm hover:text-muji-ink transition-colors"><i class="ph-bold ph-x text-sm"></i></button>
+                        <div class="flex items-center gap-3">
+                            <!-- ★ 新增：AI 掃描收據按鈕 -->
+                            <button @click="triggerReceiptCamera" class="bg-gradient-to-r from-muji-tech to-stone-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform tracking-widest"><i class="ph-fill ph-magic-wand"></i> AI 掃描</button>
+                            <input type="file" ref="receiptInputRef" accept="image/*" capture="environment" @change="handleReceiptUpload" class="hidden" />
+                            
+                            <button @click="expenseModal.show = false; playSound('pop')" class="w-8 h-8 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center active:scale-90 text-stone-400 shadow-sm hover:text-muji-ink transition-colors"><i class="ph-bold ph-x text-sm"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- ★ 新增：AI 處理中的全畫面遮罩 -->
+                    <div v-if="isScanningReceipt" class="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-t-xl">
+                        <div class="w-12 h-12 border-4 border-stone-200 border-t-muji-tech rounded-full animate-spin mb-4"></div>
+                        <p class="text-sm font-bold text-muji-ink tracking-widest font-mono">{{ receiptScanStatus }}</p>
                     </div>
 
                     <div class="flex-1 overflow-y-auto hide-scrollbar space-y-5 pb-6">
-                        <!-- ★ 更新：雙開關設計 (版面優化，分帳也能選收入) -->
+                        <!-- ★ 恢復：雙開關設計 (個人/分帳 與 支出/收入) -->
                         <div class="grid grid-cols-2 gap-3">
                             <div class="flex bg-stone-100 p-1 rounded-xl border border-stone-200 shadow-inner-soft">
                                 <button @click="expenseModal.expense.splitType = 'personal'; playSound('click')" class="flex-1 py-2 text-[11px] font-bold rounded-lg transition-all tracking-widest flex items-center justify-center gap-1" :class="expenseModal.expense.splitType === 'personal' ? 'bg-white text-muji-ink shadow-sm border border-stone-200/50' : 'text-stone-400 hover:text-stone-500'"><i class="ph-fill ph-user"></i> 個人</button>
@@ -1136,15 +1141,37 @@
                                             <span class="text-sm font-bold text-muji-ink">{{ d.name }}</span>
                                         </div>
                                         <div v-if="expenseModal.expense.splitMethod === 'exact'" class="w-24">
-                                            <input type="number" v-model="d.amount" placeholder="0" class="w-full bg-stone-50 border border-stone-200 rounded px-2 py-1.5 text-right text-sm font-bold font-mono outline-none focus:border-muji-tech transition-colors shadow-inner-soft">
+                                            <!-- ★ 更新：如果有 AI 明細，隱藏輸入框改為自動計算顯示 -->
+                                            <div v-if="expenseModal.expense.receiptItems?.length" class="text-right text-[15px] font-bold font-mono text-muji-tech py-1">
+                                                {{ getCalculatedExactAmount(d.id).toLocaleString('zh-TW') }}
+                                            </div>
+                                            <input v-else type="number" v-model="d.amount" placeholder="0" class="w-full bg-stone-50 border border-stone-200 rounded px-2 py-1.5 text-right text-sm font-bold font-mono outline-none focus:border-muji-tech transition-colors shadow-inner-soft">
                                         </div>
                                     </div>
                                 </div>
-                                <!-- 剩餘分配提示 -->
-                                <div v-if="expenseModal.expense.splitMethod === 'exact'" class="mt-3 text-right">
+                                <!-- 剩餘分配提示 (無 AI 明細時顯示) -->
+                                <div v-if="expenseModal.expense.splitMethod === 'exact' && !expenseModal.expense.receiptItems?.length" class="mt-3 text-right">
                                     <p class="text-[10px] font-bold tracking-widest font-mono bg-white inline-block px-2 py-1 rounded border shadow-sm" :class="exactRemainingAmt === 0 ? 'text-green-500 border-green-200' : 'text-red-500 border-red-200'">
                                         <i :class="exactRemainingAmt === 0 ? 'ph-check-circle' : 'ph-warning'" class="ph-fill mr-1"></i> 剩餘未分配：{{ exactRemainingAmt.toLocaleString('zh-TW') }}
                                     </p>
+                                </div>
+
+                                <!-- ★ 新增：AI 掃描的單品指派 UI (螢光筆分配流) -->
+                                <div v-if="expenseModal.expense.splitMethod === 'exact' && expenseModal.expense.receiptItems?.length" class="mt-3 bg-white p-2.5 rounded-lg border border-muji-tech/20 shadow-sm relative overflow-hidden">
+                                    <div class="absolute -right-2 -top-2 opacity-5 text-4xl"><i class="ph-fill ph-magic-wand"></i></div>
+                                    <p class="text-[10px] text-muji-tech font-bold mb-3 tracking-widest font-mono relative z-10"><i class="ph-fill ph-sparkle"></i> AI 解析明細 (點擊標籤切換擁有者)</p>
+                                    <div class="space-y-1 relative z-10 max-h-[30vh] overflow-y-auto hide-scrollbar">
+                                        <div v-for="(item, idx) in expenseModal.expense.receiptItems" :key="'ri-'+idx" class="flex justify-between items-center p-2.5 bg-stone-50 rounded-md">
+                                            <span class="text-xs font-bold text-muji-ink truncate flex-1 pr-2 leading-tight">{{ item.name }}</span>
+                                            <span class="text-[11px] font-mono font-bold text-stone-500 w-12 text-right mr-3 shrink-0">{{ item.total }}</span>
+                                            <button @click="cycleAssignee(idx)" class="px-2 py-1.5 min-w-[56px] text-[10px] font-bold rounded shadow-sm transition-colors shrink-0 text-center truncate" :class="getAssigneeClass(item.assignee)">{{ getAssigneeName(item.assignee) }}</button>
+                                        </div>
+                                    </div>
+                                    <div v-if="receiptDiffAmount > 0" class="flex justify-between items-center p-2 text-stone-400 mt-2 border-t border-stone-100">
+                                        <span class="text-[10px] font-bold tracking-widest flex-1"><i class="ph-bold ph-info"></i> 未列明細差額/稅金 (將依勾選均分)</span>
+                                        <span class="text-[10px] font-mono font-bold mr-3">{{ receiptDiffAmount }}</span>
+                                        <span class="w-[56px] text-center text-[10px] font-bold bg-stone-200 text-stone-500 rounded px-2 py-1">均分</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1676,8 +1703,8 @@
                 
                 // ★ 記帳 Modal 狀態與資料
                 const expenseCalcExpr = ref('');
-                // ★ 更新 expense 預設結構：加入 splitType, paidBy, splitMethod, splitDetails
-                const expenseModal = ref({ show: false, mode: 'add', expense: { id: '', date: '', amount: '', currency: 'TWD', type: 'expense', category: 'food', note: '', excludeFromTotal: false, amountTWD: 0, splitType: 'personal', paidBy: 'me', splitMethod: 'equal', splitDetails: [] } });
+                // 更新 expense 預設結構：加入 receiptItems
+                const expenseModal = ref({ show: false, mode: 'add', expense: { id: '', date: '', amount: '', currency: 'TWD', type: 'expense', category: 'food', note: '', excludeFromTotal: false, amountTWD: 0, splitType: 'personal', paidBy: 'me', splitMethod: 'equal', splitDetails: [], receiptItems: [] } });
                 const expenseCategories = [
                     { id: 'food', name: '飲食', icon: 'ph-hamburger', bgClass: 'bg-orange-500', colorClass: 'bg-orange-500', tags: ['正餐', '小吃', '咖啡', '便利商店', '酒水'] },
                     { id: 'transport', name: '交通', icon: 'ph-train', bgClass: 'bg-blue-500', colorClass: 'bg-blue-500', tags: ['地鐵', '計程車', '巴士', '機票', '加值'] },
@@ -2101,7 +2128,6 @@
 
                 const viewportStyle = ref({ height: '100vh', top: '0px' });
                 
-                const fontSizeLevel = ref(1);
                 const weatherTrendType = ref('temp');
                 const collapsedGroups = ref({ current: false, future: false, past: true });
                 const collapsedExpenses = ref({}); // ★ 新增：記帳本每日清單折疊狀態
@@ -2166,6 +2192,7 @@
                     ]}
                 ];
 
+                // ★ 修正：補齊行程內的豐富預設範本 (機票、分帳成員、記帳明細)
                 const getDefaultTrips = () => {
                     const futureStart = new Date();
                     futureStart.setHours(0, 0, 0, 0);
@@ -2191,35 +2218,45 @@
                             { id: `day-tpl-3`, date: fmt(futureEnd), title: '第 3 天', theme: '文化與購物', spots: [], areas: ['澀谷'] }
                         ], 
                         flights: [
-                            { airline: '星宇航空', no: 'JX800', date: fmt(futureStart), dep: 'TPE', arr: 'NRT', time: '08:30', terminal: '1', cabin: '經濟艙', gate: '', seat: '' },
-                            { airline: '星宇航空', no: 'JX801', date: fmt(futureEnd), dep: 'NRT', arr: 'TPE', time: '13:40', terminal: '2', cabin: '經濟艙', gate: '', seat: '' }
+                            { airline: '星宇航空', no: 'JX800', date: fmt(futureStart), dep: 'TPE', arr: 'NRT', time: '08:30', terminal: '1', cabin: '經濟艙', gate: 'A1', seat: '22A' }
                         ],
-                        expenses: [] // ★ 初始化加入記帳本結構
+                        members: [
+                            { id: 'tm-tpl-1', name: '阿明' },
+                            { id: 'tm-tpl-2', name: '小美' }
+                        ],
+                        expenses: [
+                            { id: 'exp-tpl-1', date: 'pre-trip', amount: 15000, amountBase: 15000, amountTWD: 15000, currency: 'TWD', type: 'expense', category: 'transport', note: '來回機票', excludeFromTotal: false, splitType: 'personal', paidBy: 'me', splitMethod: 'equal', splitDetails: [], receiptItems: [] },
+                            { id: 'exp-tpl-2', date: fmt(futureStart), amount: 5000, amountBase: 1057, amountTWD: 1057, currency: 'JPY', type: 'expense', category: 'food', note: '敘敘苑燒肉', excludeFromTotal: false, splitType: 'split', paidBy: 'me', splitMethod: 'equal', splitDetails: [
+                                { id: 'me', name: '我 (主帳號)', checked: true, amount: '', amountBase: 353 },
+                                { id: 'tm-tpl-1', name: '阿明', checked: true, amount: '', amountBase: 352 },
+                                { id: 'tm-tpl-2', name: '小美', checked: true, amount: '', amountBase: 352 }
+                            ], receiptItems: [] }
+                        ]
                     }];
                 };
 
-                // Data Persistence
-                const rawCheck = localStorage.getItem('cotabi_cl_v46');
-                const checklistCategories = ref(rawCheck ? JSON.parse(rawCheck) : JSON.parse(JSON.stringify(defaultChecklist)));
-                const rawTrips = localStorage.getItem('cotabi_trips_v46');
-                const trips = ref(rawTrips ? JSON.parse(rawTrips) : getDefaultTrips());
+                // ★ 新增：隱私保險箱預設成員範本
+                const getDefaultMembers = () => [
+                    { id: 'm-template', nameZh: '王大明 (範本)', lastNameEn: 'WANG', firstNameEn: 'DA-MING', passportNo: 'A123456789', idNo: 'A123456789', gender: 'M', bloodType: 'O' }
+                ];
 
-                // ★ 確保舊有的 trips 都有 expenses 陣列
-                trips.value.forEach(t => { if(!t.expenses) t.expenses = []; });
-
-                const locationName = ref('定位中...');
-                const weatherInfo = ref({ temp: null, desc: '載入中', icon: 'ph-cloud', bgIcon: 'ph-cloud', color: 'text-stone-300', type: 'cloudy', precipProb: '--', hourly: [] });
+                const checklistCategories = ref(JSON.parse(localStorage.getItem('cotabi_cl_v46')) || defaultChecklist);
+                const trips = ref(JSON.parse(localStorage.getItem('cotabi_trips_v46')) || getDefaultTrips());
+                const locationName = ref('當地位置');
+                const weatherInfo = ref({ temp: null, desc: '', icon: 'ph-sun', bgIcon: 'ph-sun', color: 'text-orange-400', precipProb: 0, hourly: [] });
                 const isFetchingWeather = ref(false);
                 const locationUpdateStatus = ref(null);
-                const vaultMembers = ref([{ id: '1', nameZh: '王小明', lastNameEn: 'WANG', firstNameEn: 'XIAO-MING', passportNo: 'A12345678', idNo: 'A123456789', gender: 'M', bloodType: 'O' }]);
+                
+                // ★ 修正：載入隱私保險箱的預設範本
+                const vaultMembers = ref(JSON.parse(localStorage.getItem('cotabi_members_v46')) || getDefaultMembers());
 
-                // Computed
-                const activeTrip = computed(() => trips.value.find(t => t.id === activeTripId.value) || null);
-                const currentDayItinerary = computed(() => activeTrip.value?.days.find(d => d.id === activeDay.value) || activeTrip.value?.days[0] || null);
+                // ★ 恢復遺失的核心狀態變數
+                const activeTrip = computed(() => trips.value.find(t => t.id === activeTripId.value));
+                const currentDayItinerary = computed(() => activeTrip.value?.days.find(d => d.id === activeDay.value));
+
                 const displayExpression = computed(() => calcExpression.value || '0');
                 const hasOperatorInExpr = computed(() => /[+\-*/]/.test(calcExpression.value));
 
-                // ★ 記帳本相關 Computed
                 const evaluatedExpenseAmt = computed(() => {
                     let val = 0;
                     try { val = eval(expenseCalcExpr.value.replace(/[+\-*/.]$/, '') || '0'); } catch(e) { val = 0; }
@@ -2227,13 +2264,50 @@
                 });
                 const hasExpenseOperator = computed(() => /[+\-*/]/.test(expenseCalcExpr.value));
 
-                // ★ 分帳：計算「按金額」模式下的剩餘未分配金額
+                // ★ 分帳：計算「按金額」模式下的剩餘未分配金額 (若無 AI 明細)
                 const exactRemainingAmt = computed(() => {
-                    if (expenseModal.value.expense.splitMethod !== 'exact') return 0;
+                    if (expenseModal.value.expense.splitMethod !== 'exact' || expenseModal.value.expense.receiptItems?.length > 0) return 0;
                     const total = evaluatedExpenseAmt.value || 0;
                     const sum = expenseModal.value.expense.splitDetails.reduce((s, d) => s + (Number(d.amount) || 0), 0);
                     return total - sum;
                 });
+
+                // ★ AI 分帳邏輯：計算差額與個人應付金額
+                const receiptDiffAmount = computed(() => {
+                    if (!expenseModal.value.expense.receiptItems?.length) return 0;
+                    const total = evaluatedExpenseAmt.value || 0;
+                    const itemsTotal = expenseModal.value.expense.receiptItems.reduce((s, item) => s + (Number(item.total) || 0), 0);
+                    return Math.max(0, total - itemsTotal);
+                });
+
+                const getCalculatedExactAmount = (memberId) => {
+                    if (!expenseModal.value.expense.receiptItems?.length) return 0;
+                    
+                    let amt = 0;
+                    let equalPool = receiptDiffAmount.value; // 差額先丟進均分池
+                    
+                    expenseModal.value.expense.receiptItems.forEach(item => {
+                        const val = Number(item.total) || 0;
+                        if (item.assignee === 'equal') {
+                            equalPool += val;
+                        } else if (item.assignee === memberId) {
+                            amt += val;
+                        }
+                    });
+
+                    // 處理均分池的分配
+                    const checkedMembers = expenseModal.value.expense.splitDetails.filter(d => d.checked).map(d => d.id);
+                    if (checkedMembers.length > 0 && checkedMembers.includes(memberId)) {
+                        const perPerson = Math.floor(equalPool / checkedMembers.length);
+                        amt += perPerson;
+                        // 零頭補給勾選清單的第一個人
+                        if (checkedMembers[0] === memberId) {
+                            const remainder = equalPool - (perPerson * checkedMembers.length);
+                            amt += remainder;
+                        }
+                    }
+                    return amt;
+                };
 
                 const currentExpenseTags = computed(() => expenseCategories.find(c => c.id === expenseModal.value.expense.category)?.tags || []);
                 const getExpenseCategoryDef = (cid) => expenseCategories.find(c => c.id === cid) || expenseCategories[5];
@@ -2323,9 +2397,19 @@
                     const hours = weatherInfo.value.hourly || [];
                     if(hours.length === 0) return { pathD: '', hours: [] };
                     const values = hours.map(h => weatherTrendType.value === 'temp' ? h.temp : h.precip);
-                    const minV = Math.min(...values); 
-                    const maxV = Math.max(...values);
-                    const range = maxV - minV;
+                    let minV = Math.min(...values); 
+                    let maxV = Math.max(...values);
+                    
+                    // ★ 修正：針對氣溫進行動態範圍補齊，避免溫差太小(或為0)時圖表暴衝或貼底
+                    if (weatherTrendType.value === 'temp') {
+                        const currentRange = maxV - minV;
+                        if (currentRange < 4) {
+                            const center = (minV + maxV) / 2;
+                            minV = center - 2;
+                            maxV = center + 2;
+                        }
+                    }
+                    const effectiveRange = maxV - minV;
                     
                     const mappedHours = hours.map((h, i) => {
                         const val = weatherTrendType.value === 'temp' ? h.temp : h.precip;
@@ -2333,11 +2417,7 @@
                         if (weatherTrendType.value === 'precip') {
                             y = 60 - (val / 100) * 45; 
                         } else {
-                            if (range === 0) {
-                                y = 37.5;
-                            } else {
-                                y = 60 - ((val - minV) / range) * 45; 
-                            }
+                            y = 60 - ((val - minV) / effectiveRange) * 45; 
                         }
                         return { ...h, x: i * 48 + 24, y };
                     });
@@ -2826,8 +2906,8 @@
                         if (!editExp.splitType) editExp.splitType = 'personal';
                         if (!editExp.paidBy) editExp.paidBy = 'me';
                         if (!editExp.splitMethod) editExp.splitMethod = 'equal';
+                        if (!editExp.receiptItems) editExp.receiptItems = [];
                         
-                        // 同步舊有的或新的成員名單
                         editExp.splitDetails = allMembers.map(m => {
                             const existing = editExp.splitDetails?.find(x => x.id === m.id);
                             return { id: m.id, name: m.name, checked: existing ? existing.checked : true, amount: existing ? existing.amount : '', amountBase: existing ? existing.amountBase : 0 };
@@ -2837,12 +2917,11 @@
                         expenseCalcExpr.value = String(editExp.amount || '');
                     } else {
                         const defaultDate = currentDayItinerary.value?.date || activeTrip.value?.days[0]?.date || 'pre-trip';
-                        
                         const initSplitDetails = allMembers.map(m => ({ id: m.id, name: m.name, checked: true, amount: '', amountBase: 0 }));
                         
                         expenseModal.value = { 
                             show: true, mode: 'add', 
-                            expense: { id: `exp-${Date.now()}-${Math.floor(Math.random()*1000)}`, date: defaultDate, amount: '', currency: lastUsedExpenseCurrency.value, type: 'expense', category: 'food', note: '', excludeFromTotal: false, amountBase: 0, amountTWD: 0, splitType: 'personal', paidBy: 'me', splitMethod: 'equal', splitDetails: initSplitDetails } 
+                            expense: { id: `exp-${Date.now()}-${Math.floor(Math.random()*1000)}`, date: defaultDate, amount: '', currency: lastUsedExpenseCurrency.value, type: 'expense', category: 'food', note: '', excludeFromTotal: false, amountBase: 0, amountTWD: 0, splitType: 'personal', paidBy: 'me', splitMethod: 'equal', splitDetails: initSplitDetails, receiptItems: [] } 
                         };
                         expenseCalcExpr.value = '';
                     }
@@ -2868,11 +2947,16 @@
                             const checkedCount = expenseModal.value.expense.splitDetails.filter(d => d.checked).length;
                             if (checkedCount === 0) { 
                                 playSound('error'); 
-                                alert('請至少勾選一位參與分攤的成員！'); // 簡單的 fallback 提示
+                                alert('請至少勾選一位參與分攤的成員！'); 
                                 return; 
                             }
                         } else if (expenseModal.value.expense.splitMethod === 'exact') {
-                            if (exactRemainingAmt.value !== 0) {
+                            if (expenseModal.value.expense.receiptItems?.length > 0) {
+                                // AI 明細模式：強制將計算結果寫回 splitDetails.amount 以供後續儲存
+                                expenseModal.value.expense.splitDetails.forEach(d => {
+                                    d.amount = getCalculatedExactAmount(d.id);
+                                });
+                            } else if (exactRemainingAmt.value !== 0) {
                                 playSound('error');
                                 return; // 剩餘金額必須為 0 才能儲存
                             }
@@ -2942,6 +3026,150 @@
                         expenseModal.value.show = false;
                         playSound('pop');
                     });
+                };
+
+                // ★ 新增：AI 收據掃描邏輯
+                const receiptInputRef = ref(null);
+                const isScanningReceipt = ref(false);
+                const receiptScanStatus = ref('');
+
+                const triggerReceiptCamera = () => { if (receiptInputRef.value) receiptInputRef.value.click(); };
+
+                const handleReceiptUpload = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    if (!userApiKey.value || userApiKey.value.trim() === '') {
+                        alert('⚠️ 請先至首頁右上角設定輸入 Google Gemini API 金鑰。');
+                        playSound('error');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            // 壓縮邏輯 (1600px, 0.85)
+                            const MAX_DIMENSION = 1600;
+                            let width = img.width;
+                            let height = img.height;
+                            if (width > height && width > MAX_DIMENSION) { height = Math.round(height * (MAX_DIMENSION / width)); width = MAX_DIMENSION; } 
+                            else if (height > MAX_DIMENSION) { width = Math.round(width * (MAX_DIMENSION / height)); height = MAX_DIMENSION; }
+                            const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+                            const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+                            
+                            const base64Data = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+                            doReceiptScan(base64Data);
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                };
+
+                const doReceiptScan = async (base64) => {
+                    isScanningReceipt.value = true;
+                    receiptScanStatus.value = 'AI 正在解析收據...';
+                    playSound('pop');
+                    
+                    try {
+                        // ★ 更新：動態取得裝置預設語言名稱 (轉為英文讓 AI 更好理解，例如：Traditional Chinese, English)
+                        let targetLangName = 'Traditional Chinese';
+                        try {
+                            const userLang = navigator.language || navigator.userLanguage || 'zh-TW';
+                            const displayNames = new Intl.DisplayNames(['en'], { type: 'language' });
+                            targetLangName = displayNames.of(userLang) || userLang;
+                        } catch (e) {}
+
+                        // 強硬的 Prompt 限制器，確保 JSON 結構且拒絕非收據圖片，並要求強制翻譯為裝置預設語言
+                        const sysInstruction = `You are a strict receipt/invoice data extraction assistant. Your ONLY purpose is to extract transaction details. If the image is NOT a receipt, invoice, or a clear list of purchased items, you MUST output {"isReceipt": false}. Do not analyze photos of people, scenery, or general objects. IMPORTANT: You MUST translate the extracted store name ("note") and item names ("name") into ${targetLangName}. Return data STRICTLY in this JSON schema without markdown: { "isReceipt": true, "total": number, "currency": "string(e.g. JPY, TWD, USD)", "category": "string(choose ONE: food, transport, stay, shopping, fun, other)", "note": "string(Store name translated to ${targetLangName})", "items": [ {"name": "string(Item name translated to ${targetLangName})", "price": number, "qty": number, "total": number} ] }`;
+
+                        const payload = {
+                            systemInstruction: { parts: [{ text: sysInstruction }] },
+                            generationConfig: { responseMimeType: "application/json" },
+                            contents: [{ parts: [{ text: "Extract receipt info." }, { inlineData: { mimeType: 'image/jpeg', data: base64 } }] }]
+                        };
+                        
+                        const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${userApiKey.value.trim()}`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) throw new Error('API Request Failed');
+
+                        const data = await response.json();
+                        const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+                        const result = JSON.parse(resultText);
+
+                        if (result.isReceipt === false) {
+                            alert('⚠️ 無法解析：這似乎不是一張收據或發票照片。');
+                            playSound('error');
+                            return;
+                        }
+
+                        // 自動填入表單
+                        expenseCalcExpr.value = String(result.total || '0');
+                        expenseModal.value.expense.currency = currencyList.find(c => c.code === result.currency) ? result.currency : lastUsedExpenseCurrency.value;
+                        if (result.category && expenseCategories.some(c => c.id === result.category)) expenseModal.value.expense.category = result.category;
+                        expenseModal.value.expense.note = result.note || '';
+
+                        // 處理明細與 Flatten 邏輯
+                        if (result.items && result.items.length > 0) {
+                            const flattened = [];
+                            result.items.forEach(item => {
+                                const q = item.qty || 1;
+                                const p = item.price || (item.total ? Math.round(item.total/q) : 0);
+                                for (let i = 0; i < q; i++) {
+                                    flattened.push({
+                                        name: q > 1 ? `${item.name} (${i+1}/${q})` : item.name,
+                                        total: p,
+                                        assignee: 'equal' // 預設全部為均分
+                                    });
+                                }
+                            });
+                            expenseModal.value.expense.receiptItems = flattened;
+                            // 自動切換到分帳的精細指派模式
+                            expenseModal.value.expense.splitType = 'split';
+                            expenseModal.value.expense.splitMethod = 'exact';
+                        } else {
+                            expenseModal.value.expense.receiptItems = [];
+                        }
+                        
+                        playSound('success');
+
+                    } catch (error) {
+                        console.error(error);
+                        alert('⚠️ 掃描失敗：無法辨識或網路發生錯誤。');
+                        playSound('error');
+                    } finally {
+                        isScanningReceipt.value = false;
+                        if (receiptInputRef.value) receiptInputRef.value.value = '';
+                    }
+                };
+
+                // AI 單品指派 UI 輔助函數
+                const cycleAssignee = (idx) => {
+                    const item = expenseModal.value.expense.receiptItems[idx];
+                    const allMembers = [{ id: 'me', name: '我' }, ...(activeTrip.value?.members || [])];
+                    const ids = ['equal', ...allMembers.map(m => m.id)];
+                    
+                    const currentIdx = ids.indexOf(item.assignee);
+                    const nextIdx = (currentIdx + 1) % ids.length;
+                    item.assignee = ids[nextIdx];
+                    playSound('click');
+                };
+
+                const getAssigneeName = (id) => {
+                    if (id === 'equal') return '均分';
+                    if (id === 'me') return '我';
+                    const m = activeTrip.value?.members?.find(x => x.id === id);
+                    return m ? m.name : '未知';
+                };
+
+                const getAssigneeClass = (id) => {
+                    if (id === 'equal') return 'bg-stone-200 text-stone-500 border border-stone-300';
+                    if (id === 'me') return 'bg-muji-tech text-white border border-muji-tech';
+                    // 根據 id 長度隨機給定不同顏色來區分不同朋友
+                    const colors = ['bg-orange-500', 'bg-emerald-500', 'bg-pink-500', 'bg-indigo-500'];
+                    const color = colors[id.length % colors.length];
+                    return `${color} text-white border ${color}`;
                 };
 
                 const openFlightModal = (trip) => { 
@@ -3362,7 +3590,6 @@
                     }
                 };
 
-                const updateRootFontSize = () => { const sizes = { 1: '16px', 2: '18px', 3: '20px' }; document.documentElement.style.fontSize = sizes[fontSizeLevel.value]; };
                 const scrollToTop = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); if (mainScrollArea.value) mainScrollArea.value.scrollTop = 0; };
                 const openSettings = () => { showSettings.value = true; playSound('pop'); };
 
@@ -3411,13 +3638,15 @@
                     setTimeout(() => splashStep.value = 2, 1000);
                     setTimeout(() => splashStep.value = 3, 2400);
                     setTimeout(() => showSplash.value = false, 3200);
-                    updateLocation(true); fetchExchangeRate(); updateRootFontSize();
+                    updateLocation(true); fetchExchangeRate();
                     fetchBaseRates(); // 啟動時自動抓取一次基礎匯率
                 });
 
-                watch([trips, checklistCategories], () => {
+                // ★ 修正：將 vaultMembers 加回資料儲存監聽中，解決隱私資料重整後消失的問題
+                watch([trips, checklistCategories, vaultMembers], () => {
                     localStorage.setItem('cotabi_cl_v46', JSON.stringify(checklistCategories.value));
                     localStorage.setItem('cotabi_trips_v46', JSON.stringify(trips.value));
+                    localStorage.setItem('cotabi_members_v46', JSON.stringify(vaultMembers.value));
                 }, { deep: true });
 
                 // 監聽設定變更並存入本地儲存
@@ -3440,11 +3669,12 @@
                 });
 
                 return {
-                    showSplash, splashStep, mainScrollArea, textInputRef, activeTab, activeTripId, activeDay, tripViewMode, expenseViewMode, showSettings, copiedId, textModal, tripModal, categoryModal, flightModal, checklistResetModal, checklistItemModal, spotModal, memberModal, confirmModal, iconModal, viewportStyle, fontSizeLevel, weatherTrendType, collapsedGroups, collapsedExpenses, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers, baseCurrency,
+                    showSplash, splashStep, mainScrollArea, textInputRef, activeTab, activeTripId, activeDay, tripViewMode, expenseViewMode, showSettings, copiedId, textModal, tripModal, categoryModal, flightModal, checklistResetModal, checklistItemModal, spotModal, memberModal, confirmModal, iconModal, viewportStyle, weatherTrendType, collapsedGroups, collapsedExpenses, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers, baseCurrency,
                     activeTrip, currentDayItinerary, displayExpression, hasOperatorInExpr, weatherTrend, categorizedTrips, calendarYear, calendarMonth, calendarDays, calculatedResultFormatted, evaluatedBaseFormatted, currentDateShort, currentDayOfWeek, greetingText, currencyList, formatDayTab, isFlightPassed,
-                    expenseModal, expenseCalcExpr, evaluatedExpenseAmt, hasExpenseOperator, exactRemainingAmt, expenseCategories, currentExpenseTags, tripExpensesGrouped, tripTotalExpenseBase, tripCategoryStats, getExpenseCategoryDef, handleExpenseCalc, openExpenseModal, appendExpenseNote, saveExpense, deleteExpense,
+                    expenseModal, expenseCalcExpr, evaluatedExpenseAmt, hasExpenseOperator, exactRemainingAmt, receiptDiffAmount, getCalculatedExactAmount, expenseCategories, currentExpenseTags, tripExpensesGrouped, tripTotalExpenseBase, tripCategoryStats, getExpenseCategoryDef, handleExpenseCalc, openExpenseModal, appendExpenseNote, saveExpense, deleteExpense,
+                    receiptInputRef, isScanningReceipt, receiptScanStatus, triggerReceiptCamera, handleReceiptUpload, cycleAssignee, getAssigneeName, getAssigneeClass,
                     tripMemberModal, openTripMemberModal, addTripMember, removeTripMember, settleUpModal, openSettleUpModal, copySettlementText,
-                    playSound, getCurrencySym, getTripDateRange, toggleGroup, toggleExpenseGroup, switchTab, openTrip, switchDay, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, deleteTrip, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, openSpotModal, saveSpot, deleteSpot, addArea, removeArea, toggleCheck, openCategoryModal, saveCategory, deleteCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, deleteChecklistItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, updateRootFontSize, availableIcons, tabs, openMaps, getCategoryProgress, requestConfirm, execConfirm,
+                    playSound, getCurrencySym, getTripDateRange, toggleGroup, toggleExpenseGroup, switchTab, openTrip, switchDay, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, deleteTrip, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, openSpotModal, saveSpot, deleteSpot, addArea, removeArea, toggleCheck, openCategoryModal, saveCategory, deleteCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, deleteChecklistItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, availableIcons, tabs, openMaps, getCategoryProgress, requestConfirm, execConfirm,
                     translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen, userApiKey, tempApiKey, apiKeySaved, saveApiKey, showApiKey,
                     photoTranslatorModal, photoImage, isPhotoTranslating, photoTargetLang, photoResult, photoTranslatingStatus, photoInputRef, openPhotoTranslator, closePhotoTranslator, triggerCamera, handlePhotoUpload, doPhotoTranslate,
                     sizeModal, activeSizeTab, activeSizeRow, sizeData, openSizeModal, searchStandardIdx, searchValue, availableSearchValues, sizeTableBodyRef, findSizeRowFromValue, updateSearchFromRow, handleHorizontalScroll,
