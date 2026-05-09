@@ -64,7 +64,7 @@
         .modal-enter-active .modal-panel { transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .modal-leave-active .modal-panel { transition: transform 0.3s cubic-bezier(0.4, 0, 1, 1); }
         .modal-enter-from .modal-panel, .modal-leave-to .modal-panel { transform: translateY(100%); }
-        .modal-panel { transform: translateY(0); }
+        .modal-panel { transform: translateY(0); max-height: calc(100% - 10px) !important; }
 
         /* 手風琴展開動畫 */
         .expand-enter-active, .expand-leave-active {
@@ -1012,6 +1012,24 @@
                                 </button>
                             </div>
                         </div>
+
+                        <!-- ★ 新增：資料備份與還原區塊 -->
+                        <div class="bg-white rounded-xl p-5 border border-stone-200 shadow-soft">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-bold text-muji-ink tracking-widest font-mono">資料備份與還原</span>
+                                <i class="ph-fill ph-database text-muji-tech text-lg"></i>
+                            </div>
+                            <p class="text-[10px] text-stone-400 mb-4 font-bold leading-relaxed">您可以將行程、記帳與保險箱等資料匯出備份，或在更換裝置時匯入還原。</p>
+                            <div class="flex gap-3">
+                                <button @click="exportData" class="flex-1 py-3 bg-stone-50 rounded-xl text-stone-500 font-bold text-[11px] tracking-widest border border-stone-200 active:scale-95 shadow-sm transition-colors flex items-center justify-center gap-1.5 hover:bg-stone-100">
+                                    <i class="ph-bold ph-export text-sm"></i> 匯出備份
+                                </button>
+                                <button @click="triggerImport" class="flex-1 py-3 bg-muji-ink text-white rounded-xl font-bold text-[11px] tracking-widest shadow-md active:scale-95 transition-colors flex items-center justify-center gap-1.5 hover:bg-stone-800 border border-transparent">
+                                    <i class="ph-bold ph-download-simple text-sm"></i> 匯入還原
+                                </button>
+                                <input type="file" ref="importInputRef" accept=".json" class="hidden" @change="importData" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1164,7 +1182,7 @@
                                         <div v-for="(item, idx) in expenseModal.expense.receiptItems" :key="'ri-'+idx" class="flex justify-between items-center p-2.5 bg-stone-50 rounded-md">
                                             <span class="text-xs font-bold text-muji-ink truncate flex-1 pr-2 leading-tight">{{ item.name }}</span>
                                             <span class="text-[11px] font-mono font-bold text-stone-500 w-12 text-right mr-3 shrink-0">{{ item.total }}</span>
-                                            <button @click="cycleAssignee(idx)" class="px-2 py-1.5 min-w-[56px] text-[10px] font-bold rounded shadow-sm transition-colors shrink-0 text-center truncate" :class="getAssigneeClass(item.assignee)">{{ getAssigneeName(item.assignee) }}</button>
+                                            <button @click="openItemAssigneeModal(idx)" class="px-2 py-1.5 min-w-[56px] text-[10px] font-bold rounded shadow-sm transition-colors shrink-0 text-center truncate max-w-[100px]" :class="getItemAssigneeClass(item)">{{ getItemAssigneeText(item) }}</button>
                                         </div>
                                     </div>
                                     <div v-if="receiptDiffAmount > 0" class="flex justify-between items-center p-2 text-stone-400 mt-2 border-t border-stone-100">
@@ -1199,11 +1217,10 @@
                             </div>
                         </div>
 
-                        <!-- 日期與進階選項 -->
+                        <!-- 日期與進階選項 (★ 這裡是被截斷破壞結構的地方，已完美修復) -->
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-white rounded-xl p-4 border border-stone-200 shadow-soft">
                                 <p class="text-[10px] text-stone-400 font-bold mb-2 tracking-widest font-mono">消費日期</p>
-                                <!-- 修改為自訂選項的下拉選單，包含行前與行後 -->
                                 <div class="relative">
                                     <select v-model="expenseModal.expense.date" class="w-full bg-stone-50 border border-stone-100 text-[13px] font-bold font-mono rounded-lg px-3 py-2 outline-none shadow-sm cursor-pointer appearance-none">
                                         <option value="pre-trip">行前花費</option>
@@ -1224,8 +1241,29 @@
                         
                         <button v-if="expenseModal.mode === 'edit'" @click="deleteExpense" class="w-full py-3 mt-2 rounded-xl border border-red-200 bg-red-50 text-red-500 text-[13px] font-bold tracking-widest active:scale-95 transition-all shadow-sm">刪除此筆記帳</button>
                     </div>
-
+                    
+                    <!-- ★ 色彩語意統一 (墨黑色) -->
                     <button @click="saveExpense" class="w-full mt-2 py-4 rounded-xl bg-muji-ink text-white text-[13px] font-bold tracking-widest shadow-md active:scale-95 transition-transform shrink-0 border-2 border-white/10">儲存記帳</button>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 單品分攤成員 Modal -->
+        <transition name="modal">
+            <div v-if="itemAssigneeModal.show" class="fixed left-0 w-full bg-stone-900/60 backdrop-blur-sm flex items-end justify-center z-[8500]" :style="viewportStyle" @click.self="itemAssigneeModal.show = false; playSound('pop')">
+                <div class="modal-panel bg-muji-bg w-full max-w-md rounded-t-xl p-6 relative font-sans flex flex-col">
+                    <div class="flex justify-between items-center mb-4 shrink-0">
+                        <h3 class="text-base font-bold text-muji-ink tracking-widest font-mono">分配給誰？</h3>
+                        <button @click="itemAssigneeModal.show = false; playSound('pop')" class="w-8 h-8 rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center text-stone-400 hover:text-muji-ink"><i class="ph-bold ph-x text-sm"></i></button>
+                    </div>
+                    <p class="text-[10px] text-stone-400 mb-3 tracking-widest font-mono shrink-0">可複選，未勾選任何人即代表「全體均分」。</p>
+                    <div class="flex-1 overflow-y-auto hide-scrollbar space-y-2 mb-4">
+                        <div v-for="m in [{id:'me', name:'我 (主帳號)'}, ...(activeTrip?.members||[])]" :key="'iam-'+m.id" @click="toggleItemAssignee(m.id)" class="flex items-center gap-3 p-3 bg-white border border-stone-200 rounded-lg cursor-pointer transition-colors" :class="itemAssigneeModal.tempAssignees.includes(m.id) ? 'border-muji-tech bg-blue-50/30' : ''">
+                            <div class="w-5 h-5 rounded-full border flex items-center justify-center transition-colors shadow-sm" :class="itemAssigneeModal.tempAssignees.includes(m.id) ? 'bg-muji-tech border-muji-tech text-white' : 'bg-stone-50 border-stone-300 text-transparent'"><i class="ph-bold ph-check text-[10px]"></i></div>
+                            <span class="text-sm font-bold text-muji-ink">{{ m.name }}</span>
+                        </div>
+                    </div>
+                    <button @click="saveItemAssignee" class="w-full py-4 rounded-xl bg-muji-ink text-white font-bold text-[13px] shadow-md tracking-widest active:scale-95 transition-all shrink-0">確認選擇</button>
                 </div>
             </div>
         </transition>
@@ -2161,6 +2199,68 @@
                     setTimeout(() => { apiKeySaved.value = false; }, 2000);
                 };
 
+                // ★ 新增：資料匯出與匯入邏輯
+                const importInputRef = ref(null);
+
+                const exportData = () => {
+                    const data = {
+                        version: '1.0',
+                        date: new Date().toISOString(),
+                        checklist: checklistCategories.value,
+                        trips: trips.value,
+                        members: vaultMembers.value,
+                        baseCurrency: baseCurrency.value,
+                        apiKey: userApiKey.value
+                    };
+                    const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `COTABI_Backup_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    playSound('success');
+                    showToast('備份檔已下載');
+                };
+
+                const triggerImport = () => {
+                    if (importInputRef.value) importInputRef.value.click();
+                };
+
+                const importData = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    requestConfirm('匯入資料還原', '警告：匯入將會完全覆蓋您目前的行程、記帳與保險箱紀錄。確定要繼續嗎？', () => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const data = JSON.parse(e.target.result);
+                                if (data.trips) trips.value = data.trips;
+                                if (data.checklist) checklistCategories.value = data.checklist;
+                                if (data.members) vaultMembers.value = data.members;
+                                if (data.baseCurrency) baseCurrency.value = data.baseCurrency;
+                                if (data.apiKey) {
+                                    userApiKey.value = data.apiKey;
+                                    tempApiKey.value = data.apiKey;
+                                    localStorage.setItem('cotabi_apikey', data.apiKey);
+                                }
+                                playSound('success');
+                                showToast('資料已成功還原');
+                                showSettings.value = false; // 關閉設定面板
+                            } catch (error) {
+                                playSound('error');
+                                showToast('備份檔格式錯誤', 'ph-warning');
+                            }
+                        };
+                        reader.readAsText(file);
+                    });
+                    event.target.value = ''; // 重置 file input，確保可重複上傳同一個檔案
+                };
+
                 // Constants
                 const currencyList = [
                     { code: 'TWD', name: '台幣', sym: 'NT$' }, { code: 'JPY', name: '日圓', sym: '¥' }, 
@@ -2284,25 +2384,31 @@
                     if (!expenseModal.value.expense.receiptItems?.length) return 0;
                     
                     let amt = 0;
-                    let equalPool = receiptDiffAmount.value; // 差額先丟進均分池
+                    let equalPool = receiptDiffAmount.value; 
                     
+                    const checkedMembers = expenseModal.value.expense.splitDetails.filter(d => d.checked).map(d => d.id);
+                    const totalChecked = checkedMembers.length || 1; 
+
                     expenseModal.value.expense.receiptItems.forEach(item => {
                         const val = Number(item.total) || 0;
-                        if (item.assignee === 'equal') {
-                            equalPool += val;
-                        } else if (item.assignee === memberId) {
-                            amt += val;
+                        const assignees = item.assignees || (item.assignee && item.assignee !== 'equal' ? [item.assignee] : []);
+
+                        if (assignees.length === 0) {
+                            equalPool += val; // 空陣列代表全體均分
+                        } else if (assignees.includes(memberId)) {
+                            const portion = Math.floor(val / assignees.length);
+                            amt += portion;
+                            if (assignees[0] === memberId) {
+                                amt += (val - (portion * assignees.length)); // 零頭給第一個勾選的人
+                            }
                         }
                     });
 
-                    // 處理均分池的分配
-                    const checkedMembers = expenseModal.value.expense.splitDetails.filter(d => d.checked).map(d => d.id);
-                    if (checkedMembers.length > 0 && checkedMembers.includes(memberId)) {
-                        const perPerson = Math.floor(equalPool / checkedMembers.length);
+                    if (checkedMembers.includes(memberId)) {
+                        const perPerson = Math.floor(equalPool / totalChecked);
                         amt += perPerson;
-                        // 零頭補給勾選清單的第一個人
                         if (checkedMembers[0] === memberId) {
-                            const remainder = equalPool - (perPerson * checkedMembers.length);
+                            const remainder = equalPool - (perPerson * totalChecked);
                             amt += remainder;
                         }
                     }
@@ -3120,7 +3226,7 @@
                                     flattened.push({
                                         name: q > 1 ? `${item.name} (${i+1}/${q})` : item.name,
                                         total: p,
-                                        assignee: 'equal' // 預設全部為均分
+                                        assignees: [] // 預設全部為均分
                                     });
                                 }
                             });
@@ -3145,15 +3251,41 @@
                 };
 
                 // AI 單品指派 UI 輔助函數
-                const cycleAssignee = (idx) => {
+                const itemAssigneeModal = ref({ show: false, itemIdx: null, tempAssignees: [] });
+
+                const openItemAssigneeModal = (idx) => {
                     const item = expenseModal.value.expense.receiptItems[idx];
-                    const allMembers = [{ id: 'me', name: '我' }, ...(activeTrip.value?.members || [])];
-                    const ids = ['equal', ...allMembers.map(m => m.id)];
-                    
-                    const currentIdx = ids.indexOf(item.assignee);
-                    const nextIdx = (currentIdx + 1) % ids.length;
-                    item.assignee = ids[nextIdx];
-                    playSound('click');
+                    itemAssigneeModal.value.itemIdx = idx;
+                    const arr = item.assignees || (item.assignee && item.assignee !== 'equal' ? [item.assignee] : []);
+                    itemAssigneeModal.value.tempAssignees = [...arr];
+                    itemAssigneeModal.value.show = true;
+                    playSound('pop');
+                };
+
+                const toggleItemAssignee = (id) => {
+                    const arr = itemAssigneeModal.value.tempAssignees;
+                    const pos = arr.indexOf(id);
+                    if (pos > -1) arr.splice(pos, 1);
+                    else arr.push(id);
+                    playSound(pos > -1 ? 'uncheck' : 'check');
+                };
+
+                const saveItemAssignee = () => {
+                    const idx = itemAssigneeModal.value.itemIdx;
+                    if (idx !== null) {
+                        const item = expenseModal.value.expense.receiptItems[idx];
+                        item.assignees = [...itemAssigneeModal.value.tempAssignees];
+                        delete item.assignee; // 為了相容並清空舊有資料結構
+                    }
+                    itemAssigneeModal.value.show = false;
+                    playSound('success');
+                };
+
+                const getItemAssigneeText = (item) => {
+                    const arr = item.assignees || (item.assignee && item.assignee !== 'equal' ? [item.assignee] : []);
+                    if (arr.length === 0) return '均分';
+                    if (arr.length === 1) return getAssigneeName(arr[0]);
+                    return `${arr.length}人分攤`;
                 };
 
                 const getAssigneeName = (id) => {
@@ -3163,12 +3295,13 @@
                     return m ? m.name : '未知';
                 };
 
-                const getAssigneeClass = (id) => {
-                    if (id === 'equal') return 'bg-stone-200 text-stone-500 border border-stone-300';
-                    if (id === 'me') return 'bg-muji-tech text-white border border-muji-tech';
-                    // 根據 id 長度隨機給定不同顏色來區分不同朋友
+                const getItemAssigneeClass = (item) => {
+                    const arr = item.assignees || (item.assignee && item.assignee !== 'equal' ? [item.assignee] : []);
+                    if (arr.length === 0) return 'bg-stone-200 text-stone-500 border border-stone-300';
+                    if (arr.length > 1) return 'bg-muji-ink text-white border border-muji-ink';
+                    if (arr[0] === 'me') return 'bg-muji-tech text-white border border-muji-tech';
                     const colors = ['bg-orange-500', 'bg-emerald-500', 'bg-pink-500', 'bg-indigo-500'];
-                    const color = colors[id.length % colors.length];
+                    const color = colors[arr[0].length % colors.length];
                     return `${color} text-white border ${color}`;
                 };
 
@@ -3672,14 +3805,15 @@
                     showSplash, splashStep, mainScrollArea, textInputRef, activeTab, activeTripId, activeDay, tripViewMode, expenseViewMode, showSettings, copiedId, textModal, tripModal, categoryModal, flightModal, checklistResetModal, checklistItemModal, spotModal, memberModal, confirmModal, iconModal, viewportStyle, weatherTrendType, collapsedGroups, collapsedExpenses, calendarDate, currencyFrom, currencyTo, exchangeRate, isFetchingRate, rateUpdateStatus, calcExpression, checklistCategories, trips, locationName, weatherInfo, isFetchingWeather, locationUpdateStatus, vaultMembers, baseCurrency,
                     activeTrip, currentDayItinerary, displayExpression, hasOperatorInExpr, weatherTrend, categorizedTrips, calendarYear, calendarMonth, calendarDays, calculatedResultFormatted, evaluatedBaseFormatted, currentDateShort, currentDayOfWeek, greetingText, currencyList, formatDayTab, isFlightPassed,
                     expenseModal, expenseCalcExpr, evaluatedExpenseAmt, hasExpenseOperator, exactRemainingAmt, receiptDiffAmount, getCalculatedExactAmount, expenseCategories, currentExpenseTags, tripExpensesGrouped, tripTotalExpenseBase, tripCategoryStats, getExpenseCategoryDef, handleExpenseCalc, openExpenseModal, appendExpenseNote, saveExpense, deleteExpense,
-                    receiptInputRef, isScanningReceipt, receiptScanStatus, triggerReceiptCamera, handleReceiptUpload, cycleAssignee, getAssigneeName, getAssigneeClass,
+                    receiptInputRef, isScanningReceipt, receiptScanStatus, triggerReceiptCamera, handleReceiptUpload, itemAssigneeModal, openItemAssigneeModal, toggleItemAssignee, saveItemAssignee, getItemAssigneeText, getItemAssigneeClass, getAssigneeName,
                     tripMemberModal, openTripMemberModal, addTripMember, removeTripMember, settleUpModal, openSettleUpModal, copySettlementText,
                     playSound, getCurrencySym, getTripDateRange, toggleGroup, toggleExpenseGroup, switchTab, openTrip, switchDay, calendarPrevMonth, calendarNextMonth, openTripModal, openEditTripModal, saveTripModal, deleteTrip, openFlightModal, addFlightLeg, removeFlightLeg, saveFlightInfo, openSpotModal, saveSpot, deleteSpot, addArea, removeArea, toggleCheck, openCategoryModal, saveCategory, deleteCategory, openChecklistReset, resetChecklist, openChecklistItemModal, saveChecklistItem, deleteChecklistItem, openIconSelector, selectIcon, openTextInput, saveTextInput, cancelTextInput, openMemberModal, saveMember, deleteMember, updateLocation, fetchExchangeRate, toggleCurrency, handleCalc, copyText, scrollToTop, openSettings, availableIcons, tabs, openMaps, getCategoryProgress, requestConfirm, execConfirm,
                     translatorModal, transLanguages, transTop, transBottom, isTranslating, openTranslator, closeTranslator, toggleListen, userApiKey, tempApiKey, apiKeySaved, saveApiKey, showApiKey,
                     photoTranslatorModal, photoImage, isPhotoTranslating, photoTargetLang, photoResult, photoTranslatingStatus, photoInputRef, openPhotoTranslator, closePhotoTranslator, triggerCamera, handlePhotoUpload, doPhotoTranslate,
                     sizeModal, activeSizeTab, activeSizeRow, sizeData, openSizeModal, searchStandardIdx, searchValue, availableSearchValues, sizeTableBodyRef, findSizeRowFromValue, updateSearchFromRow, handleHorizontalScroll,
                     unitModal, activeUnitKey, unitVal1, unitVal2, unitSel1, unitSel2, unitConfig, openUnitModal, handleUnit1Change, handleUnit2Change, swapUnits,
-                    plugModal, plugSearchQuery, plugData, plugTypeDesc, plugSvgs, filteredPlugs, openPlugModal
+                    plugModal, plugSearchQuery, plugData, plugTypeDesc, plugSvgs, filteredPlugs, openPlugModal,
+                    importInputRef, exportData, triggerImport, importData
                 };
             }
         }).mount('#app');
