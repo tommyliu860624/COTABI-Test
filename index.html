@@ -2870,8 +2870,8 @@
                             }]
                         };
                         
-                        // 統一鎖定使用高額度、速度快的 gemini-3.1-flash-lite-preview 模型
-                        const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`, {
+                        // 統一鎖定使用高額度、速度快的 gemini-3.5-flash-lite 模型
+                        const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -3194,7 +3194,7 @@
                             contents: [{ parts: [{ text: "Extract receipt info." }, { inlineData: { mimeType: 'image/jpeg', data: base64 } }] }]
                         };
                         
-                        const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${userApiKey.value.trim()}`, {
+                        const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${userApiKey.value.trim()}`, {
                             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
                         });
 
